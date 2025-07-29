@@ -386,10 +386,10 @@
           <div class="stat-number" id="active-today">0</div>
           <div class="stat-label">ทำงานวันนี้</div>
         </div> -->
-        <div class="stat-card">
+        <!-- <div class="stat-card">
           <div class="stat-number" id="avg-distance">0</div>
           <div class="stat-label">ระยะทางเฉลี่ย</div>
-        </div>
+        </div> -->
       </div>
 
       <div class="filter-section">
@@ -441,7 +441,16 @@
       'default': 'พนักงาน'
     };
 
+ // ...existing code...
+
+// สร้างชื่อพนักงานจาก device_id (ถ้าไม่มีข้อมูลชื่อจริง)
+function generateEmployeeName(deviceId) {
+  // ถ้ามี mapping จริงให้แก้ไขตรงนี้
+  return employeeNames[deviceId] || 'พนักงาน ' + deviceId;
  
+}// 
+
+// ...existing code...
 
     // แปลง timestamp เป็นข้อความเวลาแบบไทย (เช่น "5 นาทีที่แล้ว")
     function formatTime(timestamp) {
@@ -571,9 +580,11 @@
       }, 1000);
     }
 
-    // โหลดข้อมูลพนักงานจาก get_locations.php
+    
+
+    // โหลดข้อมูลพนักงานจาก get_locations.php/*  */
     function loadEmployees() {
-      fetch('http/get_locations.php') // ขอข้อมูลจาก server
+      fetch('http://192.168.1.173/TrackGPS/get_locations.php') // ขอข้อมูลจาก server
         .then(res => res.json()) // แปลงเป็น json
         .then(data => {
           employees = data; // เก็บข้อมูลพนักงาน
@@ -591,6 +602,7 @@
             const status = getEmployeeStatus(employee.timestamp);
             const markerColor = status === 'online' ? '#2ecc71' : '#95a5a6'; // สี marker ตามสถานะ
             // สร้าง marker ด้วยไอคอน SVG
+            
             const marker = new longdo.Marker(
               { lat, lon },
               {
