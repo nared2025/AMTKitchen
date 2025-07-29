@@ -51,7 +51,7 @@ const sendLocationToServer = async (coords) => {
         console.log('Sending location data:', locationData);
 
         // ใช้วิธีการส่งข้อมูลแบบเดียวกับโค้ดต้นฉบับ
-        const response = await fetch('http://192.168.1.173/TrackGPS/save_location.php', {
+        const response = await fetch('http://119.46.60.16/TrackGPS/save_location.php', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -147,7 +147,7 @@ const useLocation = () => {
             await Location.startLocationUpdatesAsync(BACKGROUND_LOCATION_TASK, {
                 accuracy: Location.Accuracy.High,
                 timeInterval: 1800000, // อัพเดททุก 30 นาที
-                distanceInterval: 10, // อัพเดทเมื่อเคลื่อนที่ 10 เมตร
+                distanceInterval: 100, // อัพเดทเมื่อเคลื่อนที่ 100 เมตร
                 showsBackgroundLocationIndicator: true, // แสดง indicator บน iOS
                 foregroundService: {
                     notificationTitle: 'Location Tracking',

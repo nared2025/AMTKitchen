@@ -27,7 +27,7 @@
     }
 
     #sidebar {
-      width: 320px;
+      width: 350px;
       background: rgba(255, 255, 255, 0.95);
       backdrop-filter: blur(20px);
       border-right: 1px solid rgba(255, 255, 255, 0.2);
@@ -398,7 +398,7 @@
           <button class="filter-btn active" data-filter="all">ทั้งหมด</button>
           <button class="filter-btn" data-filter="online">กำลังออนไลน์</button>
           <!-- <button class="filter-btn" data-filter="today">วันนี้</button> -->
-          <button class="filter-btn" data-filter="nearby">ใกล้เคียง</button>
+          <!-- <button class="filter-btn" data-filter="nearby">ใกล้เคียง</button> -->
         </div>
       </div>
 
@@ -428,6 +428,10 @@
       <div style="text-align: center; color: #2c3e50;">กำลังโหลดข้อมูล...</div>
     </div>
   </div>
+  <div id="total-employees">0</div>
+<div id="online-employees">0</div>
+<div id="active-today">0</div>
+
 
   <script>
     // ตัวแปรหลักสำหรับแผนที่, marker, ข้อมูลพนักงาน, และตัวกรอง
@@ -436,6 +440,7 @@
     let employees = []; // เก็บข้อมูลพนักงานทั้งหมด
     let currentFilter = 'all'; // ตัวกรองปัจจุบัน (all, online, today, nearby)
 
+    
     // Mock employee names (ไม่ได้ใช้จริงในระบบจริง)
     const employeeNames = {
       'default': 'พนักงาน'
@@ -560,7 +565,8 @@ function generateEmployeeName(deviceId) {
       if (markers[deviceId]) {
         const marker = markers[deviceId];
         map.location(marker.location(), true); // เลื่อนแผนที่ไปที่ marker
-        map.Overlays.select(marker); // เลือก marker
+        // map.Overlays.select(marker); // เลือก marker
+        
         // ไฮไลท์ card ที่เลือก
         document.querySelectorAll('.employee-card').forEach(card => {
           card.classList.remove('active');
@@ -581,66 +587,90 @@ function generateEmployeeName(deviceId) {
     }
 
     
+function loadEmployees() {
+  fetch('http://119.46.60.16/TrackGPS/get_locations.php')
+    .then(res => res.json())
+    .then(data => {
+      employees = data; // เก็บข้อมูลพนักงาน
+      // ลบ marker เดิมทั้งหมด
+      Object.values(markers).forEach(marker => {
+        map.Overlays.remove(marker);
+      });
+      markers = {}; // รีเซ็ต markers
 
-    // โหลดข้อมูลพนักงานจาก get_locations.php/*  */
-    function loadEmployees() {
-      fetch('http://192.168.1.173/TrackGPS/get_locations.php') // ขอข้อมูลจาก server
-        .then(res => res.json()) // แปลงเป็น json
-        .then(data => {
-          employees = data; // เก็บข้อมูลพนักงาน
-          // ลบ marker เดิมทั้งหมด
-          Object.values(markers).forEach(marker => {
-            map.Overlays.remove(marker);
-          });
-          markers = {}; // รีเซ็ต markers
-          // สร้าง marker ใหม่สำหรับแต่ละพนักงาน
-          data.forEach(employee => {
-            const lat = parseFloat(employee.latitude);
-            const lon = parseFloat(employee.longitude);
-            const deviceId = employee.device_id;
-            const name = generateEmployeeName(deviceId);
-            const status = getEmployeeStatus(employee.timestamp);
-            const markerColor = status === 'online' ? '#2ecc71' : '#95a5a6'; // สี marker ตามสถานะ
-            // สร้าง marker ด้วยไอคอน SVG
-            
-            const marker = new longdo.Marker(
-              { lat, lon },
-              {
-                title: name,
-                detail: `ID: ${deviceId}<br>สถานะ: ${status === 'online' ? 'ออนไลน์' : 'ออฟไลน์'}<br>อัปเดต: ${formatTime(employee.timestamp)}`,
-                icon: {
-                  url: `data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="30" height="30"><circle cx="12" cy="12" r="10" fill="${markerColor}" stroke="white" stroke-width="2"/><text x="12" y="16" font-family="Arial" font-size="14" fill="white" text-anchor="middle">${name.charAt(0)}</text></svg>`,
-                  offset: { x: 15, y: 15 }
-                }
-              }
-            );
-            map.Overlays.add(marker); // เพิ่ม marker ลงแผนที่
-            markers[deviceId] = marker; // เก็บ marker
-          });
-          updateStats(); // อัปเดตสถิติ
-          renderEmployees(); // แสดงรายชื่อ
-          // อัปเดตเวลาล่าสุด
-          document.getElementById('last-update').textContent = new Date().toLocaleTimeString('th-TH');
-        })
-        .catch(error => {
-          // ถ้า error ให้แสดงสถานะเชื่อมต่อไม่ได้
-          console.error('Error:', error);
-          document.getElementById('connection-status').textContent = 'เชื่อมต่อไม่ได้';
-        });
-    }
+      
 
+      // สร้าง marker ใหม่สำหรับแต่ละพนักงาน
+      data.forEach(employee => {
+        const lat = parseFloat(employee.latitude);
+        const lon = parseFloat(employee.longitude);
+        const deviceId = employee.device_id;
+        const name = generateEmployeeName(deviceId);
+        const status = getEmployeeStatus(employee.timestamp);
+        const markerColor = status === 'online' ? '#2ecc71' : '#95a5a6'; // สี marker ตามสถานะ
+
+        // สร้าง marker ด้วย SVG icon
+        const marker = new longdo.Marker(
+          { lat, lon },
+          {
+            title: name,
+            detail: `ID: ${deviceId}<br>สถานะ: ${status === 'online' ? 'ออนไลน์' : 'ออฟไลน์'}<br>อัปเดต: ${formatTime(employee.timestamp)}`,
+            icon: {
+              url: 'https://map.longdo.com/mmmap/images/pin_mark.png',
+              offset: { x: 15, y: 15 }
+            }
+          }
+        );
+        map.Overlays.add(marker); // เพิ่ม marker ลงแผนที่
+        markers[deviceId] = marker; // เก็บ marker
+      });
+
+      updateStats(); // อัปเดตสถิติ
+      renderEmployees(); // แสดงรายชื่อ
+      document.getElementById('last-update').textContent = new Date().toLocaleTimeString('th-TH');
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      document.getElementById('connection-status').textContent = 'เชื่อมต่อไม่ได้';
+    });
+}
     // เริ่มต้นแผนที่และโหลดข้อมูลเมื่อหน้าเว็บโหลดเสร็จ
     window.onload = function() {
       map = new longdo.Map({
         placeholder: document.getElementById('map'), // กำหนด element map
         zoom: 10 // ระดับซูมเริ่มต้น
       });
+      
+
+// ===== เพิ่มส่วนนี้เพื่อดึงตำแหน่ง user จริง =====
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(function(position) {
+      var userLat = position.coords.latitude;
+      var userLon = position.coords.longitude;
+      var userMarker = new longdo.Marker(
+        { lon: userLon, lat: userLat },
+        {
+          title: "ตำแหน่งของคุณ",
+          icon: {
+            url: "https://map.longdo.com/mmmap/images/pin_mark.png", // หรือใช้ SVG เอง
+            offset: { x: 12, y: 41 }
+          }
+        }
+      );
+      map.Overlays.add(userMarker);
+      map.location({ lon: userLon, lat: userLat }, true); // เลื่อนแผนที่ไปที่ user
+    });
+  }
+
+
       // ใส่ event ให้ปุ่ม filter ทุกปุ่ม
       document.querySelectorAll('.filter-btn').forEach(btn => {
         btn.addEventListener('click', () => {
           filterEmployees(btn.dataset.filter);
         });
       });
+
+      
       loadEmployees(); // โหลดข้อมูลครั้งแรก
       setInterval(loadEmployees, 1800000); // โหลดข้อมูลใหม่ทุก 30 นาที
     };
