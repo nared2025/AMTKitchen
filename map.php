@@ -441,21 +441,7 @@
     let currentFilter = 'all'; // ตัวกรองปัจจุบัน (all, online, today, nearby)
 
     
-    // Mock employee names (ไม่ได้ใช้จริงในระบบจริง)
-    const employeeNames = {
-      'default': 'พนักงาน'
-    };
-
- // ...existing code...
-
-// สร้างชื่อพนักงานจาก device_id (ถ้าไม่มีข้อมูลชื่อจริง)
-function generateEmployeeName(deviceId) {
-  // ถ้ามี mapping จริงให้แก้ไขตรงนี้
-  return employeeNames[deviceId] || 'พนักงาน ' + deviceId;
- 
-}// 
-
-// ...existing code...
+   
 
     // แปลง timestamp เป็นข้อความเวลาแบบไทย (เช่น "5 นาทีที่แล้ว")
     function formatTime(timestamp) {
@@ -482,33 +468,37 @@ function generateEmployeeName(deviceId) {
       return minutes < 30 ? 'online' : 'offline'; // น้อยกว่า 30 นาทีถือว่าออนไลน์
     }
 
+    function generateEmployeeName(empId) {
+  return `EMP${empId}`; // ตัวอย่างการสร้างชื่อจาก emp_id
+}
+
+
     // สร้าง HTML card สำหรับแต่ละพนักงาน
-    function createEmployeeCard(employee) {
-      const status = getEmployeeStatus(employee.timestamp); // สถานะ online/offline
-      const statusClass = status === 'online' ? 'status-online' : 'status-offline';
-      const statusText = status === 'online' ? 'ออนไลน์' : 'ออฟไลน์';
-      // คืนค่า HTML ของ card
-      return `
-        <div class="employee-card" data-device-id="${employee.device_id}" onclick="focusOnEmployee('${employee.device_id}')">
-          <div class="employee-header">
-            <div class="employee-avatar">
-              ${generateEmployeeName(employee.device_id).charAt(0)}
-            </div>
-            <div class="employee-info">
-              <div class="employee-name">${generateEmployeeName(employee.device_id)}</div>
-              <div class="employee-id">${employee.device_id}</div>
-            </div>
-          </div>
-          <div class="employee-status">
-            <span class="status-badge ${statusClass}">${statusText}</span>
-          </div>
-          <div class="employee-time">
-            <i class="fas fa-clock"></i>
-            ${formatTime(employee.timestamp)}
-          </div>
+   function createEmployeeCard(employee) {
+  const status = getEmployeeStatus(employee.timestamp); // สถานะ online/offline
+  const statusClass = status === 'online' ? 'status-online' : 'status-offline';
+  const statusText = status === 'online' ? 'ออนไลน์' : 'ออฟไลน์';
+  return `
+    <div class="employee-card" data-device-id="${employee.device_id}" onclick="focusOnEmployee('${employee.device_id}')">
+      <div class="employee-header">
+        <div class="employee-avatar">
+          ${(employee.nameEmp || 'พนักงาน').charAt(0)}
         </div>
-      `;
-    }
+        <div class="employee-info">
+          <div class="employee-name">${employee.nameEmp || 'พนักงาน ' + employee.device_id}</div>
+          <div class="employee-id">${employee.device_id}</div>
+        </div>
+      </div>
+      <div class="employee-status">
+        <span class="status-badge ${statusClass}">${statusText}</span>
+      </div>
+      <div class="employee-time">
+        <i class="fas fa-clock"></i>
+        ${formatTime(employee.timestamp)}
+      </div>
+    </div>
+  `;
+}
 
     // อัปเดตตัวเลขสถิติ (จำนวนพนักงาน, ออนไลน์, วันนี้, )
     function updateStats() {
@@ -602,6 +592,7 @@ function loadEmployees() {
 
       // สร้าง marker ใหม่สำหรับแต่ละพนักงาน
       data.forEach(employee => {
+          employee.nameEmp = employee.Name || 'พนักงาน'; // ดึงชื่อพนักงานจากฐานข้อมูล
         const lat = parseFloat(employee.latitude);
         const lon = parseFloat(employee.longitude);
         const deviceId = employee.device_id;
@@ -613,7 +604,7 @@ function loadEmployees() {
         const marker = new longdo.Marker(
           { lat, lon },
           {
-            title: name,
+            title: employee.nameEmp,
             detail: `ID: ${deviceId}<br>สถานะ: ${status === 'online' ? 'ออนไลน์' : 'ออฟไลน์'}<br>อัปเดต: ${formatTime(employee.timestamp)}`,
             icon: {
               url: 'https://map.longdo.com/mmmap/images/pin_mark.png',
