@@ -51,7 +51,7 @@ const sendLocationToServer = async (coords) => {
         console.log('Sending location data:', locationData);
 
         // ใช้วิธีการส่งข้อมูลแบบเดียวกับโค้ดต้นฉบับ
-        const response = await fetch('http://119.46.60.16/TrackGPS/save_location.php', {
+        const response = await fetch('http://192.168.1.173/TrackGPS/save_location.php', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

@@ -4,7 +4,7 @@ import { NavigationContainer } from '@react-navigation/native'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 
 import Home from './Screen/Home'
-import ProfileScreen from './Screen/ProfileScreen'
+import Product from './Screen/Product'
 import Detail from './Screen/Detail'
 
 const Stack = createNativeStackNavigator();
@@ -19,9 +19,9 @@ const App = () => {
       options={{title: 'Wellcome'}}
       />
       <Stack.Screen 
-      name="Profile" 
-      component={ProfileScreen}
-      options={{ title: 'Profile'}}
+      name="Product" 
+      component={Product}
+      options={{ title: 'Product'}}
       />
       <Stack.Screen 
       name='Detail'

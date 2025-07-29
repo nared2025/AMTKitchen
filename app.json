@@ -43,7 +43,8 @@
         {
           "locationAlwaysAndWhenInUsePermission": "Allow location access."
         }
-      ]
+      ],
+      "expo-background-task"
     ],
     "extra": {
       "eas": {

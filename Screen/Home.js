@@ -5,7 +5,7 @@ import useLocation from '../hooks/useLocation';
 const home = ({navigation}) => {
   const { latitude, longitude, errorMsg } = useLocation();
     const onPress = () => {
-      navigation.navigate('Profile');
+      navigation.navigate('Product');
     };
 
     const onGetData = () => {
@@ -17,9 +17,10 @@ const home = ({navigation}) => {
     <Pressable onPress = {onPress}>
       
     <View>
-      <Text>home</Text>
+      <Text>Product</Text>
     </View>
     </Pressable>
+
 
     <View>
         <Button title="รับข้อมูล" onPress={onGetData} />
