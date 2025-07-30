@@ -1,4 +1,4 @@
-import { View, Text, Pressable, Button } from 'react-native'
+import { View, Text, Pressable, Button, Image, StyleSheet } from 'react-native'
 import React from 'react'
 import useLocation from '../hooks/useLocation';
 
@@ -7,6 +7,9 @@ const home = ({navigation}) => {
     const onPress = () => {
       navigation.navigate('Product');
     };
+    const onPressAboutUs = () => {
+      navigation.navigate('AboutUs');
+    };
 
     const onGetData = () => {
         console.log('กดรับข้อมูล');
@@ -14,10 +17,17 @@ const home = ({navigation}) => {
     };
   return (
     <View>
+      <Image source ={require('../img/Service-Cover-Test-3.png')} style={styles.header} />
     <Pressable onPress = {onPress}>
       
     <View>
       <Text>Product</Text>
+    </View>
+    </Pressable>
+    <Pressable onPress = { onPressAboutUs }>
+      
+    <View>
+      <Text>About Us</Text>
     </View>
     </Pressable>
 
@@ -29,5 +39,14 @@ const home = ({navigation}) => {
 
   )
 }
+
+const styles = StyleSheet.create ({
+  header: {
+    width:'100%',
+    height:100,
+    resizeMode: 'cover',
+  },
+
+});
 
 export default home

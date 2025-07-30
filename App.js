@@ -6,6 +6,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import Home from './Screen/Home'
 import Product from './Screen/Product'
 import Detail from './Screen/Detail'
+import AboutUs from './Screen/AboutUs'
 
 const Stack = createNativeStackNavigator();
 
@@ -27,6 +28,11 @@ const App = () => {
       name='Detail'
       component={Detail}
       options={{ title: 'Detail'}}
+      />
+      <Stack.Screen
+      name='AboutUs'
+      component={AboutUs}
+      options={{ title: 'About Us'}}
       />
     </Stack.Navigator>  
   </NavigationContainer>
