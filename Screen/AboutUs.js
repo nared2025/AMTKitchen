@@ -101,6 +101,7 @@ const styles = StyleSheet.create({
     width:'100%',
     height:300,
     resizeMode:'center',
+    marginBottom: 15,
   },
   headerimg: {
     width:'100%',
