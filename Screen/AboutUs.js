@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, ScrollView, Image } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, Image,Dimensions } from 'react-native';
 import React from 'react';
 
 export default function AboutUs() {
@@ -79,7 +79,7 @@ for our community.
     </ScrollView>
   );
 }
-
+const {width} = Dimensions.get('window');
 const styles = StyleSheet.create({
   container: {
     padding: 16,
@@ -134,7 +134,8 @@ const styles = StyleSheet.create({
     marginBottom:20,
     marginTop:20,
     width: '18%',
-    height: 50,
+    height: width/6.5,
+    resizeMode:'cover',
   },
    textcontent: {
     fontSize: 16,

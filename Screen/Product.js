@@ -146,8 +146,17 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff'
   },
   title: {
-    fontSize: 30,
-    marginBottom: 20,
+    fontSize: 32,
+  fontWeight: '600',
+  textAlign: 'center',
+  color: '#2c3e50',
+  marginVertical: 24,
+  fontStyle: 'italic',
+  borderBottomWidth: 2,
+  borderColor: '#95a5a6',
+  paddingBottom: 8,
+  width: '80%',
+  alignSelf: 'center',
   },
   gridContainer: {
     flexDirection: 'row',

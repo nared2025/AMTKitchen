@@ -578,7 +578,7 @@
 
     
 function loadEmployees() {
-  fetch('http://119.46.60.16/TrackGPS/get_locations.php')
+  fetch('http://192.168.1.173/TrackGPS/get_locations.php')
     .then(res => res.json())
     .then(data => {
       employees = data; // เก็บข้อมูลพนักงาน
