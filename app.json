@@ -16,10 +16,13 @@
       "supportsTablet": true,
       "infoPlist": {
         "UIBackgroundModes": [
-          "location"
+          "location",
+          "background-processing",
+          "background-fetch"
         ],
         "NSLocationAlwaysAndWhenInUseUsageDescription": "This app uses your location to track your position.",
-        "NSLocationWhenInUseUsageDescription": "This app uses your location while using the app."
+        "NSLocationWhenInUseUsageDescription": "This app uses your location while using the app.",
+        "NSLocationAlwaysUsageDescription": "This app uses your location to track your position in the background."
       }
     },
     "android": {
@@ -29,9 +32,15 @@
         "ACCESS_COARSE_LOCATION",
         "ACCESS_BACKGROUND_LOCATION",
         "FOREGROUND_SERVICE",
-        "android.permission.ACCESS_COARSE_LOCATION",
-        "android.permission.ACCESS_FINE_LOCATION"
+        "FOREGROUND_SERVICE_LOCATION",
+        "WAKE_LOCK",
+        "RECEIVE_BOOT_COMPLETED",
+        "REQUEST_IGNORE_BATTERY_OPTIMIZATIONS",
+        "SYSTEM_ALERT_WINDOW",
+        "REQUEST_COMPANION_RUN_IN_BACKGROUND",
+        "REQUEST_COMPANION_USE_DATA_IN_BACKGROUND"
       ],
+      "foregroundServiceType": ["location"],
       "adaptiveIcon": {
         "foregroundImage": "./assets/AMPR_logo_gradient_B(1).png",
         "backgroundColor": "#ffffff"
@@ -41,7 +50,9 @@
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "Allow location access."
+          "locationAlwaysAndWhenInUsePermission": "This app needs access to location to track your position.",
+          "locationAlwaysPermission": "This app needs access to location to track your position in the background.",
+          "locationWhenInUsePermission": "This app needs access to location to track your position."
         }
       ],
       "expo-background-task"

@@ -5,11 +5,10 @@ import Octicons from 'react-native-vector-icons/Octicons';
 import Feather from 'react-native-vector-icons/Feather';
 
 const Home = ({ navigation }) => {
-  const { latitude, longitude, errorMsg } = useLocation();
+  const { latitude, longitude, errorMsg, deviceInfo, isBackgroundLocationActive, getUserLocation } = useLocation();
 
   const onPress = () => navigation.navigate('Product');
   const onPressAboutUs = () => navigation.navigate('AboutUs');
-  const onGetData = () => console.log('กดรับข้อมูล');
 
   return (
     <SafeAreaView style={styles.safeArea}>

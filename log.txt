@@ -1,0 +1,8 @@
+RAW: 
+\u26a0\ufe0f BODY ว่างเปล่า ไม่รับข้อมูล
+RAW: {"device_id":"TP1A.220624.014","latitude":13.7895048,"longitude":100.4897402,"timestamp":"2025-08-03T12:13:20.632Z"}
+JSON: {"device_id":"TP1A.220624.014","latitude":13.7895048,"longitude":100.4897402,"timestamp":"2025-08-03T12:13:20.632Z"}
+RAW: {"device_id":"TP1A.220624.014","latitude":13.7895048,"longitude":100.4897402,"timestamp":"2025-08-03T12:13:22.687Z"}
+JSON: {"device_id":"TP1A.220624.014","latitude":13.7895048,"longitude":100.4897402,"timestamp":"2025-08-03T12:13:22.687Z"}
+RAW: {"device_id":"TP1A.220624.014","latitude":13.7896375,"longitude":100.4896858,"timestamp":"2025-08-03T12:13:46.897Z"}
+JSON: {"device_id":"TP1A.220624.014","latitude":13.7896375,"longitude":100.4896858,"timestamp":"2025-08-03T12:13:46.897Z"}

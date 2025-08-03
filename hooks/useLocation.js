@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from 'react-native'
+import { StyleSheet, Text, View, Alert, Linking } from 'react-native'
 import React, { useEffect, useState} from 'react'
 import * as Location from "expo-location"
 import * as TaskManager from 'expo-task-manager';
@@ -48,7 +48,8 @@ const sendLocationToServer = async (coords) => {
         };
 
         console.log('📍 ตำแหน่งล่าสุด:', coords.latitude, coords.longitude);
-        console.log('Sending location data:', locationData);
+        console.log('📍 Device ID:', deviceId);
+        console.log('📍 Sending location data:', JSON.stringify(locationData, null, 2));
 
         // ใช้วิธีการส่งข้อมูลแบบเดียวกับโค้ดต้นฉบับ
         const response = await fetch('http://119.46.60.16/TrackGPS/save_location.php', {
@@ -60,13 +61,30 @@ const sendLocationToServer = async (coords) => {
         });
 
         const result = await response.text();
-        console.log("Server response:", result);
+        console.log("📍 Server response:", result);
+        console.log("📍 Response status:", response.status);
 
         if (!response.ok) {
-            console.error('Failed to send location. Status:', response.status);
+            console.error('❌ Failed to send location. Status:', response.status);
+            console.error('❌ Response text:', result);
+            // เพิ่มการบันทึก error ลง local storage
+            try {
+                const errorLog = {
+                    timestamp: new Date().toISOString(),
+                    status: response.status,
+                    error: result,
+                    location: { latitude: coords.latitude, longitude: coords.longitude }
+                };
+                console.log('❌ Error logged:', errorLog);
+            } catch (e) {
+                console.error('❌ Failed to log error:', e);
+            }
+        } else {
+            console.log('✅ Location sent successfully');
         }
     } catch (error) {
-        console.error('Fetch error:', error);
+        console.error('❌ Fetch error:', error);
+        console.error('❌ Error details:', error.message);
     }
 };
 
@@ -96,13 +114,25 @@ const useLocation = () => {
     // ฟังก์ชันสำหรับขอ permission และดึงตำแหน่งผู้ใช้
     const getUserLocation = async () => {
         try {
+            console.log('📍 Requesting location permissions...');
+            
             // ขอ permission การเข้าถึง location foreground
             let {status} = await Location.requestForegroundPermissionsAsync();
+            console.log('📍 Foreground permission status:', status);
         
             // ถ้าไม่ได้รับอนุญาต
             if(status !== 'granted') {
+                console.error('❌ Foreground location permission not granted');
                 setErrorMsg('Permission to location was not granted');
                 return;
+            }
+
+            // ขอ background permission
+            let {status: backgroundStatus} = await Location.requestBackgroundPermissionsAsync();
+            console.log('📍 Background permission status:', backgroundStatus);
+            
+            if(backgroundStatus !== 'granted') {
+                console.warn('⚠️ Background location permission not granted, but continuing...');
             }
 
             // ดึงตำแหน่งปัจจุบัน
@@ -139,28 +169,55 @@ const useLocation = () => {
             const { status } = await Location.requestBackgroundPermissionsAsync();
             
             if (status !== 'granted') {
+                console.log('❌ Background location permission not granted');
                 setErrorMsg('Background location permission not granted');
                 return false;
             }
 
+            console.log('✅ Background location permission granted');
+
+            // ตรวจสอบว่า task ถูก register ไว้แล้วหรือไม่
+            const isRegistered = await TaskManager.isTaskRegisteredAsync(BACKGROUND_LOCATION_TASK);
+            if (isRegistered) {
+                console.log('✅ Background location task already registered');
+                setIsBackgroundLocationActive(true);
+                return true;
+            }
+
             // เริ่ม background location tracking
             await Location.startLocationUpdatesAsync(BACKGROUND_LOCATION_TASK, {
-                accuracy: Location.Accuracy.High,
-                timeInterval: 1800000, // อัพเดททุก 30 นาที
-                distanceInterval: 100, // อัพเดทเมื่อเคลื่อนที่ 100 เมตร
-                showsBackgroundLocationIndicator: true, // แสดง indicator บน iOS
+                accuracy: Location.Accuracy.BestForNavigation, // ใช้ความแม่นยำสูงสุด
+                timeInterval: 3000000, // 5 นาที (300,000 มิลลิวินาที)
+                distanceInterval: 100, // 100 เมตร
+                showsBackgroundLocationIndicator: true,
                 foregroundService: {
-                    notificationTitle: 'Location Tracking',
-                    notificationBody: 'Tracking your location in background',
-                    notificationColor: '#fff'
+                    notificationTitle: 'AMT Kitchen Location',
+                    notificationBody: 'กำลังติดตามตำแหน่งของคุณ',
+                    notificationColor: '#3498db'
+                },
+                // การตั้งค่าเฉพาะสำหรับ Android
+                android: {
+                    notificationTitle: 'AMT Kitchen Location',
+                    notificationBody: 'กำลังติดตามตำแหน่งของคุณ',
+                    notificationColor: '#3498db',
+                    notificationChannelId: 'location-tracking',
+                    notificationChannelName: 'Location Tracking',
+                    notificationChannelDescription: 'Shows when location tracking is active',
+                    startForeground: true, // บังคับให้เป็น foreground service
+                    stopForeground: false, // ไม่หยุด foreground service
+                    priority: 'high' // ให้ความสำคัญสูง
                 }
             });
 
             setIsBackgroundLocationActive(true);
-            console.log('Background location tracking started');
+            console.log('✅ Background location tracking started successfully');
+            console.log('⏰ Location updates every 5 minutes');
+            console.log('🎯 High accuracy mode enabled');
+            
             return true;
         } catch (error) {
-            console.error('Error starting background location:', error);
+            console.error('❌ Error starting background location:', error);
+            console.error('❌ Error details:', error.message);
             setErrorMsg('Error starting background location: ' + error.message);
             return false;
         }
@@ -195,16 +252,35 @@ const useLocation = () => {
     // เรียกใช้เมื่อ component ถูก mount
     useEffect(() => {
         const initializeLocation = async () => {
-            await getDeviceInfo();
-            await getUserLocation();
-            await checkBackgroundLocationStatus();
-            await startBackgroundLocation();
+            try {
+                console.log('🚀 Initializing location services...');
+                
+                await getDeviceInfo();
+                console.log('✅ Device info loaded');
+                
+                await getUserLocation();
+                console.log('✅ User location obtained');
+                
+                await checkBackgroundLocationStatus();
+                console.log('✅ Background location status checked');
+                
+                const backgroundStarted = await startBackgroundLocation();
+                if (backgroundStarted) {
+                    console.log('✅ Background location started successfully');
+                } else {
+                    console.log('⚠️ Background location failed to start, but app will continue');
+                }
+            } catch (error) {
+                console.error('❌ Error during location initialization:', error);
+                setErrorMsg('Error initializing location: ' + error.message);
+            }
         };
 
         initializeLocation();
 
         // Cleanup function
         return () => {
+            console.log('🧹 Cleaning up location services...');
             stopBackgroundLocation();
         };
     }, []);

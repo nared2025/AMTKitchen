@@ -174,4 +174,8 @@ dependencies {
     } else {
         implementation jscFlavor
     }
+    
+    // Location and Foreground Service dependencies
+    implementation 'androidx.core:core:1.10.0'
+    implementation 'androidx.work:work-runtime:2.8.1'
 }

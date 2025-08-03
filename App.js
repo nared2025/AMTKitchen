@@ -7,6 +7,7 @@ import Home from './Screen/Home'
 import Product from './Screen/Product'
 import Detail from './Screen/Detail'
 import AboutUs from './Screen/AboutUs'
+// import './backgroundLocationTask';
 
 const Stack = createNativeStackNavigator();
 
