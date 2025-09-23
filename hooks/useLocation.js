@@ -1,8 +1,9 @@
-import { StyleSheet, Text, View, Alert, Linking } from 'react-native'
+import { StyleSheet, Text, View, Alert, Linking, Platform } from 'react-native'
 import React, { useEffect, useState} from 'react'
 import * as Location from "expo-location"
 import * as TaskManager from 'expo-task-manager';
 import * as Device from 'expo-device';
+import LocationService from '../LocationModule';
 
 // ชื่อ task สำหรับ background location
 const BACKGROUND_LOCATION_TASK = 'background-location-task';
@@ -52,7 +53,7 @@ const sendLocationToServer = async (coords) => {
         console.log('📍 Sending location data:', JSON.stringify(locationData, null, 2));
 
         // ใช้วิธีการส่งข้อมูลแบบเดียวกับโค้ดต้นฉบับ
-        const response = await fetch('http://119.46.60.16/TrackGPS/save_location.php', {
+        const response = await fetch('https://tracking.alliedmetals.com/trackgps/save_location.php', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -162,59 +163,63 @@ const useLocation = () => {
         }
     };
 
-    // ฟังก์ชันเริ่ม background location tracking
+    // ฟังก์ชันเริ่ม background location tracking (ใช้ Native Service)
     const startBackgroundLocation = async () => {
         try {
-            // ขอ permission สำหรับ background location
-            const { status } = await Location.requestBackgroundPermissionsAsync();
-            
-            if (status !== 'granted') {
-                console.log('❌ Background location permission not granted');
-                setErrorMsg('Background location permission not granted');
-                return false;
-            }
-
-            console.log('✅ Background location permission granted');
-
-            // ตรวจสอบว่า task ถูก register ไว้แล้วหรือไม่
-            const isRegistered = await TaskManager.isTaskRegisteredAsync(BACKGROUND_LOCATION_TASK);
-            if (isRegistered) {
-                console.log('✅ Background location task already registered');
+            if (Platform.OS === 'android') {
+                // ใช้ Native Service สำหรับ Android
+                console.log('🚀 Starting native location service...');
+                
+                // ขอ permission ก่อน
+                const { status } = await Location.requestBackgroundPermissionsAsync();
+                if (status !== 'granted') {
+                    console.log('❌ Background location permission not granted');
+                    setErrorMsg('Background location permission not granted');
+                    return false;
+                }
+                
+                // เริ่ม native service
+                const result = await LocationService.startLocationTracking();
+                console.log('✅ Native location service started:', result);
+                
                 setIsBackgroundLocationActive(true);
                 return true;
-            }
-
-            // เริ่ม background location tracking
-            await Location.startLocationUpdatesAsync(BACKGROUND_LOCATION_TASK, {
-                accuracy: Location.Accuracy.BestForNavigation, // ใช้ความแม่นยำสูงสุด
-                timeInterval: 3000000, // 5 นาที (300,000 มิลลิวินาที)
-                distanceInterval: 100, // 100 เมตร
-                showsBackgroundLocationIndicator: true,
-                foregroundService: {
-                    notificationTitle: 'AMT Kitchen Location',
-                    notificationBody: 'กำลังติดตามตำแหน่งของคุณ',
-                    notificationColor: '#3498db'
-                },
-                // การตั้งค่าเฉพาะสำหรับ Android
-                android: {
-                    notificationTitle: 'AMT Kitchen Location',
-                    notificationBody: 'กำลังติดตามตำแหน่งของคุณ',
-                    notificationColor: '#3498db',
-                    notificationChannelId: 'location-tracking',
-                    notificationChannelName: 'Location Tracking',
-                    notificationChannelDescription: 'Shows when location tracking is active',
-                    startForeground: true, // บังคับให้เป็น foreground service
-                    stopForeground: false, // ไม่หยุด foreground service
-                    priority: 'high' // ให้ความสำคัญสูง
+            } else {
+                // ใช้ Expo Location สำหรับ iOS (fallback)
+                console.log('🍎 Using Expo Location for iOS...');
+                
+                const { status } = await Location.requestBackgroundPermissionsAsync();
+                if (status !== 'granted') {
+                    console.log('❌ Background location permission not granted');
+                    setErrorMsg('Background location permission not granted');
+                    return false;
                 }
-            });
 
-            setIsBackgroundLocationActive(true);
-            console.log('✅ Background location tracking started successfully');
-            console.log('⏰ Location updates every 5 minutes');
-            console.log('🎯 High accuracy mode enabled');
-            
-            return true;
+                console.log('✅ Background location permission granted');
+
+                const isRegistered = await TaskManager.isTaskRegisteredAsync(BACKGROUND_LOCATION_TASK);
+                if (isRegistered) {
+                    console.log('✅ Background location task already registered');
+                    setIsBackgroundLocationActive(true);
+                    return true;
+                }
+
+                await Location.startLocationUpdatesAsync(BACKGROUND_LOCATION_TASK, {
+                    accuracy: Location.Accuracy.BestForNavigation,
+                    timeInterval: 30000,
+                    distanceInterval: 1000,
+                    showsBackgroundLocationIndicator: true,
+                    foregroundService: {
+                        notificationTitle: 'AMT Kitchen Location',
+                        notificationBody: 'กำลังติดตามตำแหน่งของคุณ',
+                        notificationColor: '#3498db'
+                    }
+                });
+
+                setIsBackgroundLocationActive(true);
+                console.log('✅ Background location tracking started successfully');
+                return true;
+            }
         } catch (error) {
             console.error('❌ Error starting background location:', error);
             console.error('❌ Error details:', error.message);
@@ -226,11 +231,20 @@ const useLocation = () => {
     // ฟังก์ชันหยุด background location tracking
     const stopBackgroundLocation = async () => {
         try {
-            const isRegistered = await TaskManager.isTaskRegisteredAsync(BACKGROUND_LOCATION_TASK);
-            if (isRegistered) {
-                await Location.stopLocationUpdatesAsync(BACKGROUND_LOCATION_TASK);
+            if (Platform.OS === 'android') {
+                // ใช้ Native Service สำหรับ Android
+                console.log('🛑 Stopping native location service...');
+                const result = await LocationService.stopLocationTracking();
+                console.log('✅ Native location service stopped:', result);
                 setIsBackgroundLocationActive(false);
-                console.log('Background location tracking stopped');
+            } else {
+                // ใช้ Expo Location สำหรับ iOS
+                const isRegistered = await TaskManager.isTaskRegisteredAsync(BACKGROUND_LOCATION_TASK);
+                if (isRegistered) {
+                    await Location.stopLocationUpdatesAsync(BACKGROUND_LOCATION_TASK);
+                    setIsBackgroundLocationActive(false);
+                    console.log('Background location tracking stopped');
+                }
             }
         } catch (error) {
             console.error('Error stopping background location:', error);
@@ -240,9 +254,17 @@ const useLocation = () => {
     // ฟังก์ชันตรวจสอบสถานะ background location
     const checkBackgroundLocationStatus = async () => {
         try {
-            const isRegistered = await TaskManager.isTaskRegisteredAsync(BACKGROUND_LOCATION_TASK);
-            setIsBackgroundLocationActive(isRegistered);
-            return isRegistered;
+            if (Platform.OS === 'android') {
+                // ใช้ Native Service สำหรับ Android
+                const result = await LocationService.isLocationTrackingActive();
+                setIsBackgroundLocationActive(result.isActive);
+                return result.isActive;
+            } else {
+                // ใช้ Expo Location สำหรับ iOS
+                const isRegistered = await TaskManager.isTaskRegisteredAsync(BACKGROUND_LOCATION_TASK);
+                setIsBackgroundLocationActive(isRegistered);
+                return isRegistered;
+            }
         } catch (error) {
             console.error('Error checking background location status:', error);
             return false;
@@ -281,7 +303,11 @@ const useLocation = () => {
         // Cleanup function
         return () => {
             console.log('🧹 Cleaning up location services...');
-            stopBackgroundLocation();
+            if (Platform.OS === 'ios') {
+                // On iOS, stop background updates when component unmounts
+                stopBackgroundLocation();
+            }
+            // On Android, keep the native Foreground Service running
         };
     }, []);
 

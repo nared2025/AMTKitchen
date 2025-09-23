@@ -1,0 +1,39 @@
+version: "3.9"
+services:
+  app:
+    build: .
+    image: amtkitchen-rn
+    container_name: amtkitchen-app
+    ports:
+      - "8081:8081"  # Metro bundler
+    volumes:
+      - .:/app
+      - gradle-cache:/opt/gradle
+      - android-sdk:/opt/android-sdk
+      - node-modules:/app/node_modules
+    environment:
+      - ANDROID_SDK_ROOT=/opt/android-sdk
+      - JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+      - GRADLE_USER_HOME=/opt/gradle
+    command: npm run start
+
+  android-build:
+    image: amtkitchen-rn
+    container_name: amtkitchen-android-build
+    depends_on:
+      - app
+    working_dir: /app/android
+    volumes:
+      - .:/app
+      - gradle-cache:/opt/gradle
+      - android-sdk:/opt/android-sdk
+    environment:
+      - ANDROID_SDK_ROOT=/opt/android-sdk
+      - JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+      - GRADLE_USER_HOME=/opt/gradle
+    command: ./gradlew assembleRelease --no-daemon
+
+volumes:
+  gradle-cache:
+  android-sdk:
+  node-modules:
