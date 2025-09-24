@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, Alert, Linking, Platform } from 'react-native'
+import { StyleSheet, Text, View, Alert, Linking, Platform, NativeModules } from 'react-native'
 import React, { useEffect, useState} from 'react'
 import * as Location from "expo-location"
 import * as TaskManager from 'expo-task-manager';
@@ -167,22 +167,47 @@ const useLocation = () => {
     const startBackgroundLocation = async () => {
         try {
             if (Platform.OS === 'android') {
-                // ใช้ Native Service สำหรับ Android
-                console.log('🚀 Starting native location service...');
-                
-                // ขอ permission ก่อน
+                // Android: พยายามใช้ Native ก่อน ถ้าไม่มีให้ fallback เป็น Expo
+                console.log('🚀 Starting background location (Android)...');
+
                 const { status } = await Location.requestBackgroundPermissionsAsync();
                 if (status !== 'granted') {
                     console.log('❌ Background location permission not granted');
                     setErrorMsg('Background location permission not granted');
                     return false;
                 }
-                
-                // เริ่ม native service
-                const result = await LocationService.startLocationTracking();
-                console.log('✅ Native location service started:', result);
-                
+
+                const hasNativeModule = !!NativeModules?.LocationModule;
+                if (hasNativeModule) {
+                    try {
+                        const result = await LocationService.startLocationTracking();
+                        console.log('✅ Native location service started:', result);
+                        setIsBackgroundLocationActive(true);
+                        return true;
+                    } catch (nativeErr) {
+                        console.warn('⚠️ Native LocationModule failed, falling back to Expo:', nativeErr?.message || nativeErr);
+                    }
+                } else {
+                    console.log('ℹ️ Native LocationModule not found. Using Expo fallback.');
+                }
+
+                const isRegistered = await TaskManager.isTaskRegisteredAsync(BACKGROUND_LOCATION_TASK);
+                if (!isRegistered) {
+                    await Location.startLocationUpdatesAsync(BACKGROUND_LOCATION_TASK, {
+                        accuracy: Location.Accuracy.BestForNavigation,
+                        timeInterval: 30000,
+                        distanceInterval: 1000,
+                        showsBackgroundLocationIndicator: true,
+                        foregroundService: {
+                            notificationTitle: 'AMT Kitchen Location',
+                            notificationBody: 'กำลังติดตามตำแหน่งของคุณ',
+                            notificationColor: '#3498db'
+                        }
+                    });
+                }
+
                 setIsBackgroundLocationActive(true);
+                console.log('✅ Background location tracking started via Expo');
                 return true;
             } else {
                 // ใช้ Expo Location สำหรับ iOS (fallback)
@@ -232,10 +257,23 @@ const useLocation = () => {
     const stopBackgroundLocation = async () => {
         try {
             if (Platform.OS === 'android') {
-                // ใช้ Native Service สำหรับ Android
-                console.log('🛑 Stopping native location service...');
-                const result = await LocationService.stopLocationTracking();
-                console.log('✅ Native location service stopped:', result);
+                console.log('🛑 Stopping background location (Android)...');
+                const hasNativeModule = !!NativeModules?.LocationModule;
+                if (hasNativeModule) {
+                    try {
+                        const result = await LocationService.stopLocationTracking();
+                        console.log('✅ Native location service stopped:', result);
+                        setIsBackgroundLocationActive(false);
+                        return;
+                    } catch (nativeErr) {
+                        console.warn('⚠️ Native stop failed, falling back to Expo:', nativeErr?.message || nativeErr);
+                    }
+                }
+
+                const isRegistered = await TaskManager.isTaskRegisteredAsync(BACKGROUND_LOCATION_TASK);
+                if (isRegistered) {
+                    await Location.stopLocationUpdatesAsync(BACKGROUND_LOCATION_TASK);
+                }
                 setIsBackgroundLocationActive(false);
             } else {
                 // ใช้ Expo Location สำหรับ iOS
@@ -255,10 +293,19 @@ const useLocation = () => {
     const checkBackgroundLocationStatus = async () => {
         try {
             if (Platform.OS === 'android') {
-                // ใช้ Native Service สำหรับ Android
-                const result = await LocationService.isLocationTrackingActive();
-                setIsBackgroundLocationActive(result.isActive);
-                return result.isActive;
+                const hasNativeModule = !!NativeModules?.LocationModule;
+                if (hasNativeModule) {
+                    try {
+                        const result = await LocationService.isLocationTrackingActive();
+                        setIsBackgroundLocationActive(result.isActive);
+                        return result.isActive;
+                    } catch (nativeErr) {
+                        console.warn('⚠️ Native status check failed, using Expo status:', nativeErr?.message || nativeErr);
+                    }
+                }
+                const isRegistered = await TaskManager.isTaskRegisteredAsync(BACKGROUND_LOCATION_TASK);
+                setIsBackgroundLocationActive(isRegistered);
+                return isRegistered;
             } else {
                 // ใช้ Expo Location สำหรับ iOS
                 const isRegistered = await TaskManager.isTaskRegisteredAsync(BACKGROUND_LOCATION_TASK);

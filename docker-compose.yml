@@ -1,4 +1,4 @@
-version: "3.9"
+
 services:
   app:
     build: .
@@ -31,7 +31,7 @@ services:
       - ANDROID_SDK_ROOT=/opt/android-sdk
       - JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
       - GRADLE_USER_HOME=/opt/gradle
-    command: ./gradlew assembleRelease --no-daemon
+    command: chmod +x gradlew && ./gradlew assembleRelease --no-daemon
 
 volumes:
   gradle-cache:
