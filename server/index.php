@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Employee GPS Tracker</title>
+  <script src="https://api.longdo.com/map/?key=e9f01ae5163409509985925c211792c5"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    #container {
+      display: flex;
+      height: 100vh;
+      backdrop-filter: blur(10px);
+    }
+
+    #sidebar {
+      width: 350px;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(20px);
+      border-right: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      overflow-y: auto;
+      transition: all 0.3s ease;
+      position: relative;
+      z-index: 1000;
+    }
+
+    .sidebar-header {
+      padding: 2rem 1.5rem 1.5rem;
+      background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+      color: white;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .sidebar-header::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000"><polygon fill="rgba(255,255,255,0.1)" points="0,1000 1000,1000 1000,0 0,800"/></svg>');
+      background-size: cover;
+    }
+
+    .sidebar-header h1 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    .sidebar-subtitle {
+      font-size: 0.9rem;
+      opacity: 0.8;
+      position: relative;
+      z-index: 1;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+      padding: 1.5rem;
+      background: rgba(255, 255, 255, 0.8);
+      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .stat-card {
+      background: white;
+      padding: 1rem;
+      border-radius: 12px;
+      text-align: center;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    }
+
+    .stat-number {
+      font-size: 2rem;
+      font-weight: bold;
+      color: #3498db;
+      margin-bottom: 0.5rem;
+    }
+
+    .stat-label {
+      font-size: 0.8rem;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .filter-section {
+      padding: 1.5rem;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .filter-title {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: #2c3e50;
+    }
+
+    .filter-buttons {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .filter-btn {
+      padding: 0.5rem 1rem;
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 0.8rem;
+      color: #495057;
+    }
+
+    .filter-btn.active,
+    .filter-btn:hover {
+      background: #3498db;
+      border-color: #3498db;
+      color: white;
+      transform: translateY(-1px);
+    }
+
+    .history-select {
+      padding: 0.4rem 0.8rem;
+      border-radius: 20px;
+      border: 1px solid #dee2e6;
+      background: #f8f9fa;
+      font-size: 0.8rem;
+      outline: none;
+    }
+
+    .employees-section {
+      padding: 1.5rem;
+    }
+
+    .employee-card {
+      background: white;
+      border-radius: 16px;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      transition: all 0.3s ease;
+      cursor: pointer;
+      border: 2px solid transparent;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .employee-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+      border-color: #3498db;
+    }
+
+    .employee-card.active {
+      border-color: #e74c3c;
+      background: linear-gradient(135deg, #ffeaa7 0%, #fab1a0 100%);
+    }
+
+    .employee-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .employee-avatar {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #3498db, #2980b9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 1.2rem;
+      font-weight: bold;
+      margin-right: 1rem;
+      border: 3px solid white;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .employee-info {
+      flex: 1;
+    }
+
+    .employee-name {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #2c3e50;
+      margin-bottom: 0.3rem;
+    }
+
+    .employee-id {
+      font-size: 0.8rem;
+      color: #7f8c8d;
+      background: #f8f9fa;
+      padding: 0.2rem 0.5rem;
+      border-radius: 8px;
+      display: inline-block;
+    }
+
+    .employee-status {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .status-badge {
+      padding: 0.3rem 0.8rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+
+    .status-online {
+      background: #2ecc71;
+      color: white;
+    }
+
+    .status-offline {
+      background: #95a5a6;
+      color: white;
+    }
+
+    .employee-time {
+      font-size: 0.8rem;
+      color: #7f8c8d;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+
+    #map {
+      flex: 1;
+      height: 100%;
+      position: relative;
+      /* border-radius: 0 20px 20px 0; */
+      overflow: hidden;
+      box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .map-overlay {
+      position: absolute;
+      top: 2rem;
+      right: 2rem;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      padding: 1rem;
+      /* border-radius: 12px; */
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      z-index: 100;
+    }
+
+    .refresh-btn {
+      position: absolute;
+      bottom: 2rem;
+      right: 2rem;
+      background: #3498db;
+      color: white;
+      border: none;
+      padding: 1rem;
+      border-radius: 50%;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      transition: all 0.3s ease;
+      z-index: 100;
+    }
+
+    .refresh-btn:hover {
+      background: #2980b9;
+      transform: scale(1.1);
+    }
+
+    .loading {
+      display: none;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(255, 255, 255, 0.95);
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      z-index: 1000;
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #3498db;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 1rem;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .pulse {
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+
+    /* Scrollbar styling */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #c1c1c1;
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #a8a8a8;
+    }
+
+    /* Responsive Design - Extra Large Screens (XL) */
+    @media (min-width: 1200px) {
+      #sidebar {
+        width: 400px;
+      }
+      
+      .sidebar-header h1 {
+        font-size: 1.7rem;
+      }
+      
+      .stat-number {
+        font-size: 2.2rem;
+      }
+    }
+
+    /* Large Screens (LG) - Desktop */
+    @media (max-width: 1199px) and (min-width: 992px) {
+      #sidebar {
+        width: 350px;
+      }
+    }
+
+    /* Medium Screens (MD) - Tablets Landscape */
+    @media (max-width: 991px) and (min-width: 768px) {
+      #sidebar {
+        width: 320px;
+      }
+      
+      .sidebar-header {
+        padding: 1.5rem;
+      }
+      
+      .sidebar-header h1 {
+        font-size: 1.3rem;
+      }
+      
+      .stats-grid {
+        padding: 1rem;
+      }
+      
+      .stat-number {
+        font-size: 1.8rem;
+      }
+      
+      .employee-card {
+        padding: 1.2rem;
+      }
+      
+      .employee-avatar {
+        width: 45px;
+        height: 45px;
+        font-size: 1.1rem;
+      }
+      
+      .map-overlay {
+        top: 1.5rem;
+        right: 1.5rem;
+        padding: 0.8rem;
+        font-size: 0.85rem;
+      }
+    }
+
+    /* Small Screens (SM) - Tablets Portrait */
+    @media (max-width: 767px) and (min-width: 576px) {
+      body {
+        overflow: auto;
+      }
+      
+      #container {
+        flex-direction: column;
+        height: auto;
+        min-height: 100vh;
+      }
+      
+      #sidebar {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 0;
+        max-height: 60vh;
+        overflow-y: auto;
+      }
+      
+      .sidebar-header {
+        padding: 1.5rem 1rem 1rem;
+      }
+      
+      .sidebar-header h1 {
+        font-size: 1.4rem;
+      }
+      
+      .stats-grid {
+        padding: 1rem;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.8rem;
+      }
+      
+      .stat-card {
+        padding: 0.8rem;
+      }
+      
+      .stat-number {
+        font-size: 1.6rem;
+      }
+      
+      .stat-label {
+        font-size: 0.75rem;
+      }
+      
+      .filter-section, .employees-section {
+        padding: 1rem;
+      }
+      
+      .filter-buttons {
+        flex-wrap: wrap;
+        gap: 0.4rem;
+      }
+      
+      .filter-btn {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.75rem;
+      }
+      
+      .employee-card {
+        padding: 1rem;
+        margin-bottom: 0.8rem;
+      }
+      
+      .employee-avatar {
+        width: 40px;
+        height: 40px;
+        font-size: 1rem;
+      }
+      
+      .employee-name {
+        font-size: 1rem;
+      }
+      
+      .employee-id {
+        font-size: 0.75rem;
+      }
+      
+      #map {
+        height: 50vh;
+        min-height: 350px;
+        border-radius: 0;
+      }
+      
+      .map-overlay {
+        top: 1rem;
+        right: 1rem;
+        padding: 0.7rem;
+        font-size: 0.8rem;
+      }
+      
+      .refresh-btn {
+        bottom: 1.5rem;
+        right: 1.5rem;
+        padding: 0.8rem;
+      }
+    }
+
+    /* Extra Small Screens (XS) - Mobile Phones */
+    @media (max-width: 575px) {
+      body {
+        overflow: auto;
+      }
+      
+      #container {
+        flex-direction: column;
+        height: auto;
+        min-height: 100vh;
+      }
+      
+      #sidebar {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 0;
+        max-height: 65vh;
+        overflow-y: auto;
+      }
+      
+      .sidebar-header {
+        padding: 1rem 0.8rem 0.8rem;
+        text-align: center;
+      }
+      
+      .sidebar-header h1 {
+        font-size: 1.2rem;
+      }
+      
+      .sidebar-subtitle {
+        font-size: 0.8rem;
+      }
+      
+      .stats-grid {
+        padding: 0.8rem;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.6rem;
+      }
+      
+      .stat-card {
+        padding: 0.6rem;
+      }
+      
+      .stat-number {
+        font-size: 1.4rem;
+      }
+      
+      .stat-label {
+        font-size: 0.7rem;
+      }
+      
+      .filter-section, .employees-section {
+        padding: 0.8rem;
+      }
+      
+      .filter-title {
+        font-size: 0.9rem;
+      }
+      
+      .filter-buttons {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.4rem;
+      }
+      
+      .filter-btn {
+        padding: 0.5rem;
+        font-size: 0.7rem;
+        text-align: center;
+      }
+      
+      .history-select {
+        padding: 0.5rem;
+        font-size: 0.7rem;
+      }
+      
+      .employee-card {
+        padding: 0.8rem;
+        margin-bottom: 0.6rem;
+        border-radius: 12px;
+      }
+      
+      .employee-header {
+        margin-bottom: 0.8rem;
+      }
+      
+      .employee-avatar {
+        width: 35px;
+        height: 35px;
+        font-size: 0.9rem;
+        margin-right: 0.8rem;
+      }
+      
+      .employee-name {
+        font-size: 0.9rem;
+      }
+      
+      .employee-id {
+        font-size: 0.7rem;
+        padding: 0.1rem 0.4rem;
+      }
+      
+      .status-badge {
+        padding: 0.2rem 0.6rem;
+        font-size: 0.7rem;
+      }
+      
+      .employee-time {
+        font-size: 0.7rem;
+      }
+      
+      #map {
+        height: 45vh;
+        min-height: 300px;
+        border-radius: 0;
+      }
+      
+      .map-overlay {
+        top: 0.5rem;
+        right: 0.5rem;
+        left: 0.5rem;
+        padding: 0.5rem;
+        font-size: 0.7rem;
+      }
+      
+      .refresh-btn {
+        bottom: 1rem;
+        right: 1rem;
+        padding: 0.7rem;
+        font-size: 0.9rem;
+      }
+      
+      .loading {
+        padding: 1rem;
+        font-size: 0.8rem;
+        left: 1rem;
+        right: 1rem;
+        transform: translateY(-50%);
+      }
+    }
+
+    /* Ultra Small Screens - Small Mobile */
+    @media (max-width: 360px) {
+      .sidebar-header h1 {
+        font-size: 1rem;
+      }
+      
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .filter-buttons {
+        grid-template-columns: 1fr;
+      }
+      
+      .employee-avatar {
+        width: 30px;
+        height: 30px;
+        font-size: 0.8rem;
+      }
+      
+      .employee-name {
+        font-size: 0.8rem;
+      }
+      
+      #map {
+        height: 40vh;
+        min-height: 250px;
+      }
+    }
+
+    /* Landscape Orientation for Mobile */
+    @media (max-height: 500px) and (orientation: landscape) {
+      #container {
+        flex-direction: row;
+      }
+      
+      #sidebar {
+        width: 40%;
+        max-width: 350px;
+        border-right: 1px solid rgba(255, 255, 255, 0.2);
+        border-bottom: none;
+        max-height: 100vh;
+      }
+      
+      #map {
+        width: 60%;
+        height: 100vh;
+        border-radius: 0;
+      }
+      
+      .map-overlay {
+        top: 1rem;
+        right: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="container">
+    <div id="sidebar">
+      <div class="sidebar-header">
+        <h1><i class="fas fa-user-friends"></i> ติดตามพนักงาน</h1>
+        <div class="sidebar-subtitle">ระบบติดตาม GPS สำหรับพนักงาน</div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-number" id="total-employees">0</div>
+          <div class="stat-label">พนักงานทั้งหมด</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number" id="online-employees">0</div>
+          <div class="stat-label">กำลังออนไลน์</div>
+        </div>
+      </div>
+
+      <div class="filter-section">
+        <div class="filter-title">กรองข้อมูล</div>
+        <div class="filter-buttons">
+          <button class="filter-btn active" data-filter="all">ทั้งหมด</button>
+          <button class="filter-btn" data-filter="online">กำลังออนไลน์</button>
+          <select class="filter-btn history-select" id="history-select">
+            <option value="all">เลือกดูย้อนหลัง</option>
+            <option value="1">ย้อนหลัง 1 วัน</option>
+            <option value="2">ย้อนหลัง 2 วัน</option>
+            <option value="3">ย้อนหลัง 3 วัน</option>
+            <option value="4">ย้อนหลัง 4 วัน</option>
+            <option value="5">ย้อนหลัง 5 วัน</option>
+            <option value="6">ย้อนหลัง 6 วัน</option>
+            <option value="7">ย้อนหลัง 7 วัน</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="employees-section">
+        <div class="filter-title">รายชื่อพนักงาน</div>
+        <div id="employee-list"></div>
+      </div>
+    </div>
+
+    <div id="map"></div>
+    
+    <div class="map-overlay">
+      <div style="font-size: 0.9rem; color: #2c3e50; margin-bottom: 0.5rem;">
+        <i class="fas fa-clock"></i> อัพเดตล่าสุด: <span id="last-update">-</span>
+      </div>
+      <div style="font-size: 0.8rem; color: #7f8c8d;">
+        <i class="fas fa-satellite-dish"></i> สถานะการเชื่อมต่อ: <span id="connection-status">เชื่อมต่อแล้ว</span>
+      </div>
+    </div>
+
+    <button class="refresh-btn" onclick="refreshData()">
+      <i class="fas fa-sync-alt"></i>
+    </button>
+
+    <div class="loading" id="loading">
+      <div class="spinner"></div>
+      <div style="text-align: center; color: #2c3e50;">กำลังโหลดข้อมูล...</div>
+    </div>
+  </div>
+
+  <script>
+    // ตัวแปรหลักสำหรับแผนที่, marker, ข้อมูลพนักงาน, และตัวกรอง
+    let map; // เก็บอ็อบเจกต์แผนที่ Longdo Map
+    let markers = {}; // เก็บ marker ของแต่ละพนักงาน (key = device_id)
+    let employees = []; // เก็บข้อมูลพนักงานทั้งหมด
+    let currentFilter = 'all'; // ตัวกรองปัจจุบัน (all, online, today, nearby)
+
+    // แปลง timestamp เป็นข้อความเวลาแบบไทย (เช่น "5 นาทีที่แล้ว")
+    function formatTime(timestamp) {
+      const date = new Date(timestamp); // เวลาที่รับมา
+      const now = new Date(); // เวลาปัจจุบัน
+      const diff = now - date; // ส่วนต่างเวลา (ms)
+      const minutes = Math.floor(diff / (1000 * 60));
+      const hours = Math.floor(minutes / 60);
+      const days = Math.floor(hours / 24);
+
+      if (minutes < 1) return 'เมื่อสักครู่';
+      if (minutes < 60) return `${minutes} นาทีที่แล้ว`;
+      if (hours < 24) return `${hours} ชั่วโมงที่แล้ว`;
+      if (days < 7) return `${days} วันที่แล้ว`;
+      return date.toLocaleDateString('th-TH');
+    }
+
+    // คืนค่าสถานะ online/offline จาก timestamp (ถ้าน้อยกว่า 30 นาที = online)
+    function getEmployeeStatus(timestamp) {
+      const now = new Date(); // เวลาปัจจุบัน
+      const lastSeen = new Date(timestamp); // เวลาที่พนักงานส่งข้อมูลล่าสุด
+      const diff = now - lastSeen; // ส่วนต่างเวลา (ms)
+      const minutes = Math.floor(diff / (1000 * 60));
+      return minutes < 30 ? 'online' : 'offline'; // น้อยกว่า 30 นาทีถือว่าออนไลน์
+    }
+
+    function generateEmployeeName(empId) {
+      return `EMP${empId}`; // ตัวอย่างการสร้างชื่อจาก emp_id
+    }
+
+    // สร้าง HTML card สำหรับแต่ละพนักงาน
+    function createEmployeeCard(employee) {
+      const status = getEmployeeStatus(employee.timestamp); // สถานะ online/offline
+      const statusClass = status === 'online' ? 'status-online' : 'status-offline';
+      const statusText = status === 'online' ? 'ออนไลน์' : 'ออฟไลน์';
+      return `
+        <div class="employee-card" data-device-id="${employee.device_id}" onclick="focusOnEmployee('${employee.device_id}')">
+          <div class="employee-header">
+            <div class="employee-avatar">
+              ${(employee.nameEmp || 'พนักงาน').charAt(0)}
+            </div>
+            <div class="employee-info">
+              <div class="employee-name">${employee.nameEmp || 'พนักงาน ' + employee.device_id}</div>
+              <div class="employee-id">${employee.device_id}</div>
+            </div>
+          </div>
+          <div class="employee-status">
+            <span class="status-badge ${statusClass}">${statusText}</span>
+          </div>
+          <div class="employee-time">
+            <i class="fas fa-clock"></i>
+            ${formatTime(employee.timestamp)}
+          </div>
+        </div>
+      `;
+    }
+
+    // อัปเดตตัวเลขสถิติ (จำนวนพนักงาน, ออนไลน์, วันนี้, )
+    function updateStats() {
+      const totalEmployees = employees.length; // จำนวนพนักงานทั้งหมด
+      const onlineEmployees = employees.filter(emp => getEmployeeStatus(emp.timestamp) === 'online').length; // ออนไลน์
+      const todayEmployees = employees.filter(emp => {
+        const today = new Date().toDateString();
+        const empDate = new Date(emp.timestamp).toDateString();
+        return today === empDate;
+      }).length; // ทำงานวันนี้
+      // อัปเดต DOM
+      document.getElementById('total-employees').textContent = totalEmployees;
+      document.getElementById('online-employees').textContent = onlineEmployees;
+    }
+
+    // เปลี่ยนตัวกรองและ render รายชื่อใหม่
+    function filterEmployees(filter) {
+      currentFilter = filter; // ตั้งค่าตัวกรองใหม่
+      const filterBtns = document.querySelectorAll('.filter-btn');
+      filterBtns.forEach(btn => btn.classList.remove('active'));
+      document.querySelector(`[data-filter="${filter}"]`).classList.add('active');
+      renderEmployees(); // แสดงรายชื่อใหม่
+    }
+
+    // render รายชื่อพนักงานตามตัวกรอง
+    function renderEmployees() {
+      let filteredEmployees = employees;
+      // กรองตามตัวกรองที่เลือก
+      switch(currentFilter) {
+        case 'online':
+          filteredEmployees = employees.filter(emp => getEmployeeStatus(emp.timestamp) === 'online');
+          break;
+        case 'today':
+          filteredEmployees = employees.filter(emp => {
+            const today = new Date().toDateString();
+            const empDate = new Date(emp.timestamp).toDateString();
+            return today === empDate;
+          });
+          break;
+        case 'nearby':
+          // ตัวอย่าง: เลือกครึ่งแรกของพนักงาน (mock)
+          filteredEmployees = employees.slice(0, Math.ceil(employees.length / 2));
+          break;
+      }
+      // แสดงผลใน #employee-list
+      const employeeList = document.getElementById('employee-list');
+      employeeList.innerHTML = filteredEmployees.map(createEmployeeCard).join('');
+    }
+
+    // โฟกัสไปที่ marker ของพนักงานที่เลือกบนแผนที่
+    function focusOnEmployee(deviceId) {
+      if (markers[deviceId]) {
+        const marker = markers[deviceId];
+        map.location(marker.location(), true); // เลื่อนแผนที่ไปที่ marker
+        // map.Overlays.select(marker); // เลือก marker
+        
+        // ไฮไลท์ card ที่เลือก
+        document.querySelectorAll('.employee-card').forEach(card => {
+          card.classList.remove('active');
+        });
+        document.querySelector(`[data-device-id="${deviceId}"]`).classList.add('active');
+      }
+    }
+
+    // โหลดข้อมูลใหม่ (แสดง loading, delay 1 วิ, แล้วโหลดข้อมูล)
+    function refreshData() {
+      const loading = document.getElementById('loading');
+      loading.style.display = 'block'; // แสดง loading
+      // หน่วงเวลา 1 วินาที (mock)
+      setTimeout(() => {
+        loadEmployees(); // โหลดข้อมูลใหม่
+        loading.style.display = 'none'; // ซ่อน loading
+      }, 1000);
+    }
+
+    function loadEmployees() {
+      fetch('https://tracking.alliedmetals.com/trackgps/get_locations.php')
+        .then(res => res.json())
+        .then(data => {
+          console.log('ข้อมูลที่ได้รับจาก API:', data); 
+          employees = data; // เก็บข้อมูลพนักงาน
+          // ลบ marker เดิมทั้งหมด
+          Object.values(markers).forEach(marker => {
+            map.Overlays.remove(marker);
+          });
+          markers = {}; // รีเซ็ต markers
+
+          // สร้าง marker ใหม่สำหรับแต่ละพนักงาน
+          data.forEach(employee => {
+              employee.nameEmp = employee.employee_name || 'พนักงาน'; // ดึงชื่อพนักงานจากฐานข้อมูล
+            const lat = parseFloat(employee.latitude);
+            const lon = parseFloat(employee.longitude);
+            const deviceId = employee.device_id;
+            const name = generateEmployeeName(deviceId);
+            const status = getEmployeeStatus(employee.timestamp);
+            const markerColor = status === 'online' ? '#2ecc71' : '#95a5a6'; // สี marker ตามสถานะ
+
+            // สร้าง marker ด้วย SVG icon
+            const marker = new longdo.Marker(
+              { lat, lon },
+              {
+                title: employee.nameEmp,
+                detail: `ID: ${deviceId}<br>สถานะ: ${status === 'online' ? 'ออนไลน์' : 'ออฟไลน์'}<br>อัปเดต: ${formatTime(employee.timestamp)}`,
+                icon: {
+                  url: 'https://map.longdo.com/mmmap/images/pin_mark.png',
+                  offset: { x: 15, y: 15 }
+                }
+              }
+            );
+            map.Overlays.add(marker); // เพิ่ม marker ลงแผนที่
+            markers[deviceId] = marker; // เก็บ marker
+          });
+
+          updateStats(); // อัปเดตสถิติ
+          renderEmployees(); // แสดงรายชื่อ
+          document.getElementById('last-update').textContent = new Date().toLocaleTimeString('th-TH');
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          document.getElementById('connection-status').textContent = 'เชื่อมต่อไม่ได้';
+        });
+    }
+
+    // เริ่มต้นแผนที่และโหลดข้อมูลเมื่อหน้าเว็บโหลดเสร็จ
+    window.onload = function() {
+      map = new longdo.Map({
+        placeholder: document.getElementById('map'), // กำหนด element map
+        zoom: 10 // ระดับซูมเริ่มต้น
+      });
+
+      // ===== เพิ่มส่วนนี้เพื่อดึงตำแหน่ง user จริง =====
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(position) {
+          var userLat = position.coords.latitude;
+          var userLon = position.coords.longitude;
+          var userMarker = new longdo.Marker(
+            { lon: userLon, lat: userLat },
+            {
+              title: "ตำแหน่งของคุณ",
+              icon: {
+                url: "https://map.longdo.com/mmmap/images/pin_mark.png", // หรือใช้ SVG เอง
+                offset: { x: 12, y: 41 }
+              }
+            }
+          );
+          map.Overlays.add(userMarker);
+          map.location({ lon: userLon, lat: userLat }, true); // เลื่อนแผนที่ไปที่ user
+        });
+      }
+
+      // ใส่ event ให้ปุ่ม filter ทุกปุ่ม
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          filterEmployees(btn.dataset.filter);
+        });
+      });
+
+      loadEmployees(); // โหลดข้อมูลครั้งแรก
+      setInterval(loadEmployees, 1800000); // โหลดข้อมูลใหม่ทุก 30 นาที
+    };
+  </script>
+</body>
+</html>
