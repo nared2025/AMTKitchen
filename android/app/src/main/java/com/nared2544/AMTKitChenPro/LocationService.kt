@@ -18,18 +18,40 @@ import kotlinx.coroutines.launch
 import android.util.Log
 import java.net.HttpURLConnection
 import java.net.URL
+import java.util.Locale
+import java.util.TimeZone
+import java.util.UUID
+import android.content.SharedPreferences
+import java.text.SimpleDateFormat
 
 class LocationService : Service() {
   private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
   private lateinit var fusedClient: FusedLocationProviderClient
   private lateinit var locationRequest: LocationRequest
+  private lateinit var prefs: SharedPreferences
+  private lateinit var deviceId: String
 
   override fun onCreate() {
     super.onCreate()
     Log.i("LocationService", "onCreate")
+    // Use device-protected storage if available so we can run before user unlocks after reboot
+    val storageContext: Context = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+      val dp = createDeviceProtectedStorageContext()
+      try {
+        // Move prefs from credential-protected to device-protected once
+        dp.moveSharedPreferencesFrom(this, "amt_prefs")
+      } catch (_: Throwable) {}
+      dp
+    } else {
+      this
+    }
+    prefs = storageContext.getSharedPreferences("amt_prefs", Context.MODE_PRIVATE)
+    deviceId = prefs.getString("device_id", null) ?: UUID.randomUUID().toString().also {
+      prefs.edit().putString("device_id", it).apply()
+    }
     fusedClient = LocationServices.getFusedLocationProviderClient(this)
-    locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 30_000)
-      .setMinUpdateDistanceMeters(1000f)
+    locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 15_000)
+      .setMinUpdateDistanceMeters(50f)
       .build()
     startInForeground()
     startUpdates()
@@ -89,10 +111,14 @@ class LocationService : Service() {
             doOutput = true
             setRequestProperty("Content-Type", "application/json")
           }
+          val tz = TimeZone.getTimeZone("Asia/Bangkok")
+          val iso = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.US).apply { timeZone = tz }
+          val timestamp = iso.format(System.currentTimeMillis())
           val payload = "{" +
+            "\"device_id\":\"$deviceId\"," +
             "\"latitude\":${location.latitude}," +
             "\"longitude\":${location.longitude}," +
-            "\"timestamp\":\"" + System.currentTimeMillis() + "\"}"
+            "\"timestamp\":\"$timestamp\"}"
           conn.outputStream.use { it.write(payload.toByteArray()) }
           conn.inputStream.use { it.readBytes() }
           conn.disconnect()
