@@ -300,8 +300,8 @@ const useLocation = () => {
                 if (!isRegistered) {
                     await Location.startLocationUpdatesAsync(BACKGROUND_LOCATION_TASK, {
                         accuracy: Location.Accuracy.BestForNavigation,
-                        timeInterval: 1800000, // 30 นาที (30 * 60 * 1000 ms)
-                        distanceInterval: 1000, // 1 กิโลเมตร (1000 เมตร)
+                        timeInterval: 300000, // 5 นาที (5 * 60 * 1000 ms)
+                        distanceInterval: 0, // ส่งทุก 5 นาที แม้ไม่ขยับ
                         showsBackgroundLocationIndicator: true,
                         foregroundService: {
                             notificationTitle: 'AMT Kitchen Location',
@@ -336,8 +336,8 @@ const useLocation = () => {
 
                 await Location.startLocationUpdatesAsync(BACKGROUND_LOCATION_TASK, {
                     accuracy: Location.Accuracy.BestForNavigation,
-                    timeInterval: 1800000, // 30 นาที (30 * 60 * 1000 ms)
-                    distanceInterval: 1000, // 1 กิโลเมตร (1000 เมตร)
+                    timeInterval: 300000, // 5 นาที (5 * 60 * 1000 ms)
+                    distanceInterval: 0, // ส่งทุก 5 นาที แม้ไม่ขยับ
                     showsBackgroundLocationIndicator: true,
                     foregroundService: {
                         notificationTitle: 'AMT Kitchen Location',

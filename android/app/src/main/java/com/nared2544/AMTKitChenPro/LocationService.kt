@@ -65,8 +65,8 @@ class LocationService : Service() {
       uniqueId
     }
     fusedClient = LocationServices.getFusedLocationProviderClient(this)
-    locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 1_800_000) // 30 นาที
-      .setMinUpdateDistanceMeters(1000f) // 1 กิโลเมตร
+    locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 300_000) // 5 นาที
+      .setMinUpdateDistanceMeters(0f) // ส่งตามเวลาแม้ไม่ขยับ
       .build()
     startInForeground()
     startUpdates()
