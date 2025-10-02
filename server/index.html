@@ -4,9 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Employee GPS Tracker</title>
+  <!-- เรียกใช้งาน Longdo Map API -->
   <script src="https://api.longdo.com/map/?key=e9f01ae5163409509985925c211792c5"></script>
+  <!-- เรียกใช้งาน Font Awesome สำหรับไอคอน -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <style>
+    /* กำหนดรูปแบบ CSS ทั้งหมด */
     * {
       margin: 0;
       padding: 0;
@@ -147,12 +150,19 @@
     }
 
     .history-select {
-      padding: 0.4rem 0.8rem;
+      padding: 0.5rem 1rem;
       border-radius: 20px;
       border: 1px solid #dee2e6;
       background: #f8f9fa;
       font-size: 0.8rem;
       outline: none;
+      width: 100%;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .history-select:hover {
+      border-color: #3498db;
     }
 
     .employees-section {
@@ -261,7 +271,6 @@
       flex: 1;
       height: 100%;
       position: relative;
-      /* border-radius: 0 20px 20px 0; */
       overflow: hidden;
       box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.1);
     }
@@ -273,7 +282,7 @@
       background: rgba(255, 255, 255, 0.95);
       backdrop-filter: blur(10px);
       padding: 1rem;
-      /* border-radius: 12px; */
+      border-radius: 12px;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
       z-index: 100;
     }
@@ -326,17 +335,6 @@
       100% { transform: rotate(360deg); }
     }
 
-    .pulse {
-      animation: pulse 2s infinite;
-    }
-
-    @keyframes pulse {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.05); }
-      100% { transform: scale(1); }
-    }
-
-    /* Scrollbar styling */
     ::-webkit-scrollbar {
       width: 8px;
     }
@@ -355,70 +353,7 @@
       background: #a8a8a8;
     }
 
-    /* Responsive Design - Extra Large Screens (XL) */
-    @media (min-width: 1200px) {
-      #sidebar {
-        width: 400px;
-      }
-      
-      .sidebar-header h1 {
-        font-size: 1.7rem;
-      }
-      
-      .stat-number {
-        font-size: 2.2rem;
-      }
-    }
-
-    /* Large Screens (LG) - Desktop */
-    @media (max-width: 1199px) and (min-width: 992px) {
-      #sidebar {
-        width: 350px;
-      }
-    }
-
-    /* Medium Screens (MD) - Tablets Landscape */
-    @media (max-width: 991px) and (min-width: 768px) {
-      #sidebar {
-        width: 320px;
-      }
-      
-      .sidebar-header {
-        padding: 1.5rem;
-      }
-      
-      .sidebar-header h1 {
-        font-size: 1.3rem;
-      }
-      
-      .stats-grid {
-        padding: 1rem;
-      }
-      
-      .stat-number {
-        font-size: 1.8rem;
-      }
-      
-      .employee-card {
-        padding: 1.2rem;
-      }
-      
-      .employee-avatar {
-        width: 45px;
-        height: 45px;
-        font-size: 1.1rem;
-      }
-      
-      .map-overlay {
-        top: 1.5rem;
-        right: 1.5rem;
-        padding: 0.8rem;
-        font-size: 0.85rem;
-      }
-    }
-
-    /* Small Screens (SM) - Tablets Portrait */
-    @media (max-width: 767px) and (min-width: 576px) {
+    @media (max-width: 768px) {
       body {
         overflow: auto;
       }
@@ -431,299 +366,26 @@
       
       #sidebar {
         width: 100%;
-        border-right: none;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 0;
         max-height: 60vh;
-        overflow-y: auto;
-      }
-      
-      .sidebar-header {
-        padding: 1.5rem 1rem 1rem;
-      }
-      
-      .sidebar-header h1 {
-        font-size: 1.4rem;
-      }
-      
-      .stats-grid {
-        padding: 1rem;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 0.8rem;
-      }
-      
-      .stat-card {
-        padding: 0.8rem;
-      }
-      
-      .stat-number {
-        font-size: 1.6rem;
-      }
-      
-      .stat-label {
-        font-size: 0.75rem;
-      }
-      
-      .filter-section, .employees-section {
-        padding: 1rem;
-      }
-      
-      .filter-buttons {
-        flex-wrap: wrap;
-        gap: 0.4rem;
-      }
-      
-      .filter-btn {
-        padding: 0.4rem 0.8rem;
-        font-size: 0.75rem;
-      }
-      
-      .employee-card {
-        padding: 1rem;
-        margin-bottom: 0.8rem;
-      }
-      
-      .employee-avatar {
-        width: 40px;
-        height: 40px;
-        font-size: 1rem;
-      }
-      
-      .employee-name {
-        font-size: 1rem;
-      }
-      
-      .employee-id {
-        font-size: 0.75rem;
       }
       
       #map {
         height: 50vh;
         min-height: 350px;
-        border-radius: 0;
-      }
-      
-      .map-overlay {
-        top: 1rem;
-        right: 1rem;
-        padding: 0.7rem;
-        font-size: 0.8rem;
-      }
-      
-      .refresh-btn {
-        bottom: 1.5rem;
-        right: 1.5rem;
-        padding: 0.8rem;
-      }
-    }
-
-    /* Extra Small Screens (XS) - Mobile Phones */
-    @media (max-width: 575px) {
-      body {
-        overflow: auto;
-      }
-      
-      #container {
-        flex-direction: column;
-        height: auto;
-        min-height: 100vh;
-      }
-      
-      #sidebar {
-        width: 100%;
-        border-right: none;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 0;
-        max-height: 65vh;
-        overflow-y: auto;
-      }
-      
-      .sidebar-header {
-        padding: 1rem 0.8rem 0.8rem;
-        text-align: center;
-      }
-      
-      .sidebar-header h1 {
-        font-size: 1.2rem;
-      }
-      
-      .sidebar-subtitle {
-        font-size: 0.8rem;
-      }
-      
-      .stats-grid {
-        padding: 0.8rem;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 0.6rem;
-      }
-      
-      .stat-card {
-        padding: 0.6rem;
-      }
-      
-      .stat-number {
-        font-size: 1.4rem;
-      }
-      
-      .stat-label {
-        font-size: 0.7rem;
-      }
-      
-      .filter-section, .employees-section {
-        padding: 0.8rem;
-      }
-      
-      .filter-title {
-        font-size: 0.9rem;
-      }
-      
-      .filter-buttons {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 0.4rem;
-      }
-      
-      .filter-btn {
-        padding: 0.5rem;
-        font-size: 0.7rem;
-        text-align: center;
-      }
-      
-      .history-select {
-        padding: 0.5rem;
-        font-size: 0.7rem;
-      }
-      
-      .employee-card {
-        padding: 0.8rem;
-        margin-bottom: 0.6rem;
-        border-radius: 12px;
-      }
-      
-      .employee-header {
-        margin-bottom: 0.8rem;
-      }
-      
-      .employee-avatar {
-        width: 35px;
-        height: 35px;
-        font-size: 0.9rem;
-        margin-right: 0.8rem;
-      }
-      
-      .employee-name {
-        font-size: 0.9rem;
-      }
-      
-      .employee-id {
-        font-size: 0.7rem;
-        padding: 0.1rem 0.4rem;
-      }
-      
-      .status-badge {
-        padding: 0.2rem 0.6rem;
-        font-size: 0.7rem;
-      }
-      
-      .employee-time {
-        font-size: 0.7rem;
-      }
-      
-      #map {
-        height: 45vh;
-        min-height: 300px;
-        border-radius: 0;
-      }
-      
-      .map-overlay {
-        top: 0.5rem;
-        right: 0.5rem;
-        left: 0.5rem;
-        padding: 0.5rem;
-        font-size: 0.7rem;
-      }
-      
-      .refresh-btn {
-        bottom: 1rem;
-        right: 1rem;
-        padding: 0.7rem;
-        font-size: 0.9rem;
-      }
-      
-      .loading {
-        padding: 1rem;
-        font-size: 0.8rem;
-        left: 1rem;
-        right: 1rem;
-        transform: translateY(-50%);
-      }
-    }
-
-    /* Ultra Small Screens - Small Mobile */
-    @media (max-width: 360px) {
-      .sidebar-header h1 {
-        font-size: 1rem;
-      }
-      
-      .stats-grid {
-        grid-template-columns: 1fr;
-      }
-      
-      .filter-buttons {
-        grid-template-columns: 1fr;
-      }
-      
-      .employee-avatar {
-        width: 30px;
-        height: 30px;
-        font-size: 0.8rem;
-      }
-      
-      .employee-name {
-        font-size: 0.8rem;
-      }
-      
-      #map {
-        height: 40vh;
-        min-height: 250px;
-      }
-    }
-
-    /* Landscape Orientation for Mobile */
-    @media (max-height: 500px) and (orientation: landscape) {
-      #container {
-        flex-direction: row;
-      }
-      
-      #sidebar {
-        width: 40%;
-        max-width: 350px;
-        border-right: 1px solid rgba(255, 255, 255, 0.2);
-        border-bottom: none;
-        max-height: 100vh;
-      }
-      
-      #map {
-        width: 60%;
-        height: 100vh;
-        border-radius: 0;
-      }
-      
-      .map-overlay {
-        top: 1rem;
-        right: 1rem;
       }
     }
   </style>
 </head>
 <body>
   <div id="container">
+    <!-- ส่วน Sidebar สำหรับแสดงข้อมูลพนักงานและตัวกรอง -->
     <div id="sidebar">
       <div class="sidebar-header">
         <h1><i class="fas fa-user-friends"></i> ติดตามพนักงาน</h1>
         <div class="sidebar-subtitle">ระบบติดตาม GPS สำหรับพนักงาน</div>
       </div>
 
+      <!-- แสดงสถิติพนักงานทั้งหมดและออนไลน์ -->
       <div class="stats-grid">
         <div class="stat-card">
           <div class="stat-number" id="total-employees">0</div>
@@ -735,45 +397,52 @@
         </div>
       </div>
 
+      <!-- ส่วนกรองข้อมูลและเลือกดูข้อมูลย้อนหลัง -->
       <div class="filter-section">
         <div class="filter-title">กรองข้อมูล</div>
         <div class="filter-buttons">
           <button class="filter-btn active" data-filter="all">ทั้งหมด</button>
           <button class="filter-btn" data-filter="online">กำลังออนไลน์</button>
-          <select class="filter-btn history-select" id="history-select">
-            <option value="all">เลือกดูย้อนหลัง</option>
-            <option value="1">ย้อนหลัง 1 วัน</option>
-            <option value="2">ย้อนหลัง 2 วัน</option>
-            <option value="3">ย้อนหลัง 3 วัน</option>
-            <option value="4">ย้อนหลัง 4 วัน</option>
-            <option value="5">ย้อนหลัง 5 วัน</option>
-            <option value="6">ย้อนหลัง 6 วัน</option>
-            <option value="7">ย้อนหลัง 7 วัน</option>
-          </select>
         </div>
+        <div class="filter-title" style="margin-top: 1rem;">ดูข้อมูลย้อนหลัง</div>
+        <select class="history-select" id="history-select">
+          <option value="0">ข้อมูลปัจจุบัน</option>
+          <option value="1">ย้อนหลัง 1 วัน</option>
+          <option value="2">ย้อนหลัง 2 วัน</option>
+          <option value="3">ย้อนหลัง 3 วัน</option>
+          <option value="4">ย้อนหลัง 4 วัน</option>
+          <option value="5">ย้อนหลัง 5 วัน</option>
+          <option value="6">ย้อนหลัง 6 วัน</option>
+          <option value="7">ย้อนหลัง 7 วัน</option>
+        </select>
       </div>
 
+      <!-- รายชื่อพนักงาน -->
       <div class="employees-section">
         <div class="filter-title">รายชื่อพนักงาน</div>
         <div id="employee-list"></div>
       </div>
     </div>
 
+    <!-- ส่วนแผนที่ -->
     <div id="map"></div>
     
+    <!-- แสดงข้อมูลอัพเดตล่าสุดและสถานะการเชื่อมต่อ -->
     <div class="map-overlay">
       <div style="font-size: 0.9rem; color: #2c3e50; margin-bottom: 0.5rem;">
         <i class="fas fa-clock"></i> อัพเดตล่าสุด: <span id="last-update">-</span>
       </div>
       <div style="font-size: 0.8rem; color: #7f8c8d;">
-        <i class="fas fa-satellite-dish"></i> สถานะการเชื่อมต่อ: <span id="connection-status">เชื่อมต่อแล้ว</span>
+        <i class="fas fa-satellite-dish"></i> สถานะ: <span id="connection-status">เชื่อมต่อแล้ว</span>
       </div>
     </div>
 
+    <!-- ปุ่มรีเฟรชข้อมูล -->
     <button class="refresh-btn" onclick="refreshData()">
       <i class="fas fa-sync-alt"></i>
     </button>
 
+    <!-- แสดงสถานะกำลังโหลดข้อมูล -->
     <div class="loading" id="loading">
       <div class="spinner"></div>
       <div style="text-align: center; color: #2c3e50;">กำลังโหลดข้อมูล...</div>
@@ -781,21 +450,25 @@
   </div>
 
   <script>
-    // ตัวแปรหลักสำหรับแผนที่, marker, ข้อมูลพนักงาน, และตัวกรอง
-    let map; // เก็บอ็อบเจกต์แผนที่ Longdo Map
-    let markers = {}; // เก็บ marker ของแต่ละพนักงาน (key = device_id)
-    let employees = []; // เก็บข้อมูลพนักงานทั้งหมด
-    let currentFilter = 'all'; // ตัวกรองปัจจุบัน (all, online, today, nearby)
-    let userMarker = null; // marker ของผู้ใช้เอง
-    let hasCenteredOnUser = false; // ป้องกันการเลื่อนแผนที่ซ้ำ
-    const autoRefreshIntervalMs = 5000; // ความถี่ดึงข้อมูลอัตโนมัติ (ms)
-    const enableRealtime = false; // ปิดโหมดเรียลไทม์ (SSE)
+    // ===========================
+    // ส่วนตัวแปรหลักสำหรับแผนที่และข้อมูลพนักงาน
+    // ===========================
+    let map; // ตัวแปรเก็บอ็อบเจ็กต์แผนที่ Longdo Map
+    let markers = {}; // อ็อบเจ็กต์เก็บ marker ของแต่ละพนักงาน (key = device_id)
+    let employees = []; // อาร์เรย์เก็บข้อมูลพนักงานทั้งหมด
+    let currentFilter = 'all'; // ตัวแปรเก็บสถานะการกรอง (ทั้งหมด/ออนไลน์)
+    let userMarker = null; // marker สำหรับตำแหน่งผู้ใช้
+    let hasCenteredOnUser = false; // เช็คว่าซูมไปตำแหน่งผู้ใช้แล้วหรือยัง
+    let selectedHistoryDays = 0; // จำนวนวันที่เลือกดูข้อมูลย้อนหลัง
+    const enableRealtime = false; // ตัวเลือกเปิด/ปิดโหมดเรียลไทม์
 
-    // แปลง timestamp เป็นข้อความเวลาแบบไทย (เช่น "5 นาทีที่แล้ว")
+    // ===========================
+    // ฟังก์ชันแปลง timestamp เป็นข้อความเวลาแบบไทย
+    // ===========================
     function formatTime(timestamp) {
-      const date = new Date(timestamp); // เวลาที่รับมา
-      const now = new Date(); // เวลาปัจจุบัน
-      const diff = now - date; // ส่วนต่างเวลา (ms)
+      const date = new Date(timestamp);
+      const now = new Date();
+      const diff = now - date;
       const minutes = Math.floor(diff / (1000 * 60));
       const hours = Math.floor(minutes / 60);
       const days = Math.floor(hours / 24);
@@ -807,22 +480,22 @@
       return date.toLocaleDateString('th-TH');
     }
 
-    // คืนค่าสถานะ online/offline จาก timestamp (ถ้าน้อยกว่า 30 นาที = online)
+    // ===========================
+    // ฟังก์ชันตรวจสอบสถานะพนักงาน (ออนไลน์/ออฟไลน์)
+    // ===========================
     function getEmployeeStatus(timestamp) {
-      const now = new Date(); // เวลาปัจจุบัน
-      const lastSeen = new Date(timestamp); // เวลาที่พนักงานส่งข้อมูลล่าสุด
-      const diff = now - lastSeen; // ส่วนต่างเวลา (ms)
+      const now = new Date();
+      const lastSeen = new Date(timestamp);
+      const diff = now - lastSeen;
       const minutes = Math.floor(diff / (1000 * 60));
-      return minutes < 30 ? 'online' : 'offline'; // น้อยกว่า 30 นาทีถือว่าออนไลน์
+      return minutes < 30 ? 'online' : 'offline'; // ถ้าน้อยกว่า 30 นาทีถือว่าออนไลน์
     }
 
-    function generateEmployeeName(empId) {
-      return `EMP${empId}`; // ตัวอย่างการสร้างชื่อจาก emp_id
-    }
-
+    // ===========================
     // สร้าง HTML card สำหรับแต่ละพนักงาน
+    // ===========================
     function createEmployeeCard(employee) {
-      const status = getEmployeeStatus(employee.timestamp); // สถานะ online/offline
+      const status = getEmployeeStatus(employee.timestamp);
       const statusClass = status === 'online' ? 'status-online' : 'status-offline';
       const statusText = status === 'online' ? 'ออนไลน์' : 'ออฟไลน์';
       return `
@@ -833,7 +506,7 @@
             </div>
             <div class="employee-info">
               <div class="employee-name">${employee.nameEmp || 'พนักงาน ' + employee.device_id}</div>
-              <div class="employee-id">${employee.device_id}</div>
+              
             </div>
           </div>
           <div class="employee-status">
@@ -847,86 +520,87 @@
       `;
     }
 
-    // อัปเดตตัวเลขสถิติ (จำนวนพนักงาน, ออนไลน์, วันนี้, )
-    function updateStats() {
-      const totalEmployees = employees.length; // จำนวนพนักงานทั้งหมด
-      const onlineEmployees = employees.filter(emp => getEmployeeStatus(emp.timestamp) === 'online').length; // ออนไลน์
-      const todayEmployees = employees.filter(emp => {
-        const today = new Date().toDateString();
-        const empDate = new Date(emp.timestamp).toDateString();
-        return today === empDate;
-      }).length; // ทำงานวันนี้
-      // อัปเดต DOM
-      document.getElementById('total-employees').textContent = totalEmployees;
-      document.getElementById('online-employees').textContent = onlineEmployees;
-    }
+    // ===========================
+    // อัพเดตสถิติพนักงานทั้งหมดและออนไลน์
+    // ===========================
+   let totalDevices = 0; // เก็บจำนวนพนักงานรวมจาก API
 
-    // เปลี่ยนตัวกรองและ render รายชื่อใหม่
+function updateStats() {
+  const totalEmployees = employees.length; // จำนวน device จริงที่โหลดมา
+  const onlineEmployees = employees.filter(emp => getEmployeeStatus(emp.timestamp) === 'online').length;
+  
+  document.getElementById('total-employees').textContent = totalDevices; // ใช้ค่าจาก API
+  document.getElementById('online-employees').textContent = onlineEmployees;
+}
+
+
+    // ===========================
+    // ฟังก์ชันกรองข้อมูลพนักงานตามสถานะ
+    // ===========================
     function filterEmployees(filter) {
-      currentFilter = filter; // ตั้งค่าตัวกรองใหม่
-      const filterBtns = document.querySelectorAll('.filter-btn');
+      currentFilter = filter;
+      const filterBtns = document.querySelectorAll('.filter-btn[data-filter]');
       filterBtns.forEach(btn => btn.classList.remove('active'));
-      document.querySelector(`[data-filter="${filter}"]`).classList.add('active');
-      renderEmployees(); // แสดงรายชื่อใหม่
+      const activeBtn = document.querySelector(`[data-filter="${filter}"]`);
+      if (activeBtn) activeBtn.classList.add('active');
+      renderEmployees();
     }
 
-    // render รายชื่อพนักงานตามตัวกรอง
+    // ===========================
+    // แสดงรายชื่อพนักงานตามตัวกรอง
+    // ===========================
     function renderEmployees() {
       let filteredEmployees = employees;
-      // กรองตามตัวกรองที่เลือก
-      switch(currentFilter) {
-        case 'online':
-          filteredEmployees = employees.filter(emp => getEmployeeStatus(emp.timestamp) === 'online');
-          break;
-        case 'today':
-          filteredEmployees = employees.filter(emp => {
-            const today = new Date().toDateString();
-            const empDate = new Date(emp.timestamp).toDateString();
-            return today === empDate;
-          });
-          break;
-        case 'nearby':
-          // ตัวอย่าง: เลือกครึ่งแรกของพนักงาน (mock)
-          filteredEmployees = employees.slice(0, Math.ceil(employees.length / 2));
-          break;
+      if (currentFilter === 'online') {
+        filteredEmployees = employees.filter(emp => getEmployeeStatus(emp.timestamp) === 'online');
       }
-      // แสดงผลใน #employee-list
       const employeeList = document.getElementById('employee-list');
       employeeList.innerHTML = filteredEmployees.map(createEmployeeCard).join('');
     }
 
-    // โฟกัสไปที่ marker ของพนักงานที่เลือกบนแผนที่
+    // ===========================
+    // โฟกัสไปยังตำแหน่งพนักงานบนแผนที่เมื่อคลิก
+    // ===========================
     function focusOnEmployee(deviceId) {
       if (markers[deviceId]) {
         const marker = markers[deviceId];
-        map.location(marker.location(), true); // เลื่อนแผนที่ไปที่ marker
-        // map.Overlays.select(marker); // เลือก marker
-        
-        // ไฮไลท์ card ที่เลือก
+        map.location(marker.location(), true); // ซูมไปตำแหน่ง marker
+
+        // เปลี่ยนสี card ที่เลือก
         document.querySelectorAll('.employee-card').forEach(card => {
           card.classList.remove('active');
         });
-        document.querySelector(`[data-device-id="${deviceId}"]`).classList.add('active');
+        const selectedCard = document.querySelector(`[data-device-id="${deviceId}"]`);
+        if (selectedCard) selectedCard.classList.add('active');
       }
     }
 
-    // โหลดข้อมูลใหม่ (แสดง loading, delay 1 วิ, แล้วโหลดข้อมูล)
+    // ===========================
+    // รีเฟรชข้อมูลพนักงาน (แสดง loading และโหลดใหม่)
+    // ===========================
     function refreshData() {
       const loading = document.getElementById('loading');
-      loading.style.display = 'block'; // แสดง loading
-      // หน่วงเวลา 1 วินาที (mock)
+      loading.style.display = 'block';
       setTimeout(() => {
-        loadEmployees(); // โหลดข้อมูลใหม่
-        loading.style.display = 'none'; // ซ่อน loading
+        loadEmployees();
+        loading.style.display = 'none';
       }, 1000);
     }
 
+    // ===========================
+    // โหลดข้อมูลพนักงานจาก API
+    // ===========================
     function loadEmployees() {
-      fetch('https://tracking.alliedmetals.com/trackgps/get_locations.php')
+      let url = 'https://tracking.alliedmetals.com/trackgps/get_locations.php';
+      if (selectedHistoryDays > 0) {
+        url += `?days=${selectedHistoryDays}`; // ถ้าเลือกย้อนหลัง ให้เพิ่ม query string
+      }
+
+      fetch(url)
         .then(res => res.json())
         .then(data => {
-          console.log('ข้อมูลที่ได้รับจาก API:', data); 
-          applyLocationsToMap(data);
+          console.log('ข้อมูลที่ได้รับจาก API:', data);
+          applyLocationsToMap(data); // ส่งทั้ง object เข้าไป
         })
         .catch(error => {
           console.error('Error:', error);
@@ -934,23 +608,43 @@
         });
     }
 
-    // อัปเดต/เพิ่ม/ลบ markers ตามข้อมูลล่าสุดแบบ in-place
+    // ===========================
+    // นำข้อมูลพนักงานมาแสดงบนแผนที่และอัพเดต marker
+    // ===========================
     function applyLocationsToMap(data) {
-      employees = data;
-      const seen = new Set();
-      data.forEach(employee => {
-        employee.nameEmp = employee.employee_name || 'พนักงาน';
-        const lat = parseFloat(employee.latitude);
-        const lon = parseFloat(employee.longitude);
-        const deviceId = String(employee.device_id);
-        const status = getEmployeeStatus(employee.timestamp);
-        const detailHtml = `ID: ${deviceId}<br>สถานะ: ${status === 'online' ? 'ออนไลน์' : 'ออฟไลน์'}<br>อัปเดต: ${formatTime(employee.timestamp)}`;
-        seen.add(deviceId);
+  // data คือ { total_devices: "3", locations: [ ... ] }
+  employees = data.locations;            // เก็บ array ของพนักงาน
+  totalDevices = data.total_devices; // เก็บจำนวนรวม
+
+  const seen = new Set();
+  employees.forEach(employee => {        // <-- ใช้ employees (array) แทน data
+    employee.nameEmp = employee.employee_name || 'พนักงาน';
+    const lat = parseFloat(employee.latitude);
+    const lon = parseFloat(employee.longitude);
+    const deviceId = String(employee.device_id);
+    const status = getEmployeeStatus(employee.timestamp);
+
+    // แนบ total_devices ไว้กับแต่ละ employee ถ้าจะใช้ใน card
+    employee.total_devices = totalDevices;
+
+    const detailHtml = `
+      ID: ${deviceId}<br>
+      สถานะ: ${status === 'online' ? 'ออนไลน์' : 'ออฟไลน์'}<br>
+      อัปเดต: ${formatTime(employee.timestamp)}
+    `;
+    seen.add(deviceId);
+
+  // เรียกแค่ครั้งเดียวหลัง loop เสร็จ
+  updateStats(); 
+  renderEmployees();
+
+        // ถ้ามี marker อยู่แล้ว ให้ update ตำแหน่งและข้อมูล
         if (markers[deviceId]) {
           try { markers[deviceId].location({ lat, lon }); } catch (e) {}
           try { markers[deviceId].title(employee.nameEmp); } catch (e) {}
           try { markers[deviceId].detail(detailHtml); } catch (e) {}
         } else {
+          // ถ้ายังไม่มี marker ให้สร้างใหม่
           const marker = new longdo.Marker(
             { lat, lon },
             {
@@ -966,53 +660,35 @@
           markers[deviceId] = marker;
         }
       });
-      // ลบ marker ที่ไม่มีในชุดข้อมูลใหม่
+
+      // ลบ marker ที่ไม่มีข้อมูลแล้วออกจากแผนที่
       Object.keys(markers).forEach(id => {
         if (!seen.has(id)) {
           try { map.Overlays.remove(markers[id]); } catch (e) {}
           delete markers[id];
         }
       });
-      updateStats();
-      renderEmployees();
+
+      updateStats(); // อัพเดตจำนวนพนักงาน
+      renderEmployees(); // แสดงรายชื่อพนักงาน
       document.getElementById('last-update').textContent = new Date().toLocaleTimeString('th-TH');
     }
 
-    // เชื่อมต่อ SSE เพื่อรับข้อมูลเรียลไทม์
-    function initRealtimeStream() {
-      try {
-        const source = new EventSource('locations_sse.php');
-        source.addEventListener('open', () => {
-          document.getElementById('connection-status').textContent = 'เชื่อมต่อเรียลไทม์';
-        });
-        source.addEventListener('error', () => {
-          document.getElementById('connection-status').textContent = 'เชื่อมต่อหลุด กำลังรอ...';
-        });
-        source.addEventListener('locations', (evt) => {
-          try {
-            const payload = JSON.parse(evt.data);
-            applyLocationsToMap(payload);
-          } catch (e) {
-            console.error('SSE parse error', e);
-          }
-        });
-      } catch (e) {
-        console.error('SSE init error', e);
-      }
-    }
-
-    // เริ่มต้นแผนที่และโหลดข้อมูลเมื่อหน้าเว็บโหลดเสร็จ
+    // ===========================
+    // ฟังก์ชันเริ่มต้นเมื่อโหลดหน้าเว็บ
+    // ===========================
     window.onload = function() {
+      // สร้างแผนที่ Longdo Map
       map = new longdo.Map({
-        placeholder: document.getElementById('map'), // กำหนด element map
-        zoom: 10 // ระดับซูมเริ่มต้น
+        placeholder: document.getElementById('map'),
+        zoom: 10
       });
 
-      // ติดตามตำแหน่งผู้ใช้แบบต่อเนื่อง
+      // แสดงตำแหน่งผู้ใช้บนแผนที่ (ถ้ามี)
       if (navigator.geolocation) {
         navigator.geolocation.watchPosition(function(position) {
-          var userLat = position.coords.latitude;
-          var userLon = position.coords.longitude;
+          const userLat = position.coords.latitude;
+          const userLon = position.coords.longitude;
           if (!userMarker) {
             userMarker = new longdo.Marker(
               { lon: userLon, lat: userLat },
@@ -1026,7 +702,6 @@
             );
             map.Overlays.add(userMarker);
           } else {
-            // อัปเดตตำแหน่งปัจจุบันของผู้ใช้
             try { userMarker.location({ lon: userLon, lat: userLat }); } catch (e) {}
           }
           if (!hasCenteredOnUser) {
@@ -1036,16 +711,34 @@
         }, function() {}, { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 });
       }
 
-      // ใส่ event ให้ปุ่ม filter ทุกปุ่ม
-      document.querySelectorAll('.filter-btn').forEach(btn => {
+      // ตั้งค่าการคลิกปุ่มกรองข้อมูล
+      document.querySelectorAll('.filter-btn[data-filter]').forEach(btn => {
         btn.addEventListener('click', () => {
           filterEmployees(btn.dataset.filter);
         });
       });
 
-      loadEmployees(); // โหลดข้อมูลครั้งแรก
-      if (enableRealtime) { initRealtimeStream(); }
-      setInterval(loadEmployees, 1800000); // โหลดข้อมูลใหม่ทุก 30 นาที
+      // ตั้งค่าการเปลี่ยนข้อมูลย้อนหลัง
+      document.getElementById('history-select').addEventListener('change', function() {
+        selectedHistoryDays = parseInt(this.value);
+        const loading = document.getElementById('loading');
+        loading.style.display = 'block';
+
+        const statusText = selectedHistoryDays === 0 ?
+          'ข้อมูลปัจจุบัน' :
+          `ย้อนหลัง ${selectedHistoryDays} วัน`;
+        document.getElementById('connection-status').textContent = statusText;
+
+        setTimeout(() => {
+          loadEmployees();
+          loading.style.display = 'none';
+        }, 500);
+      });
+
+      // โหลดข้อมูลพนักงานครั้งแรก
+      loadEmployees();
+      // ตั้งเวลารีเฟรชข้อมูลทุก 30 นาที (1800000 ms)
+      setInterval(loadEmployees, 1800000);
     };
   </script>
 </body>

@@ -9,12 +9,17 @@
     "jsEngine": "hermes",
     "scheme": "amtkitchenpro",
     "splash": {
-      "image": "./assets/AMTKITCHEN.png",
-      "resizeMode": "cover",
+      "image": "./assets/AMPR_logo_gradient_B(1).png",
+      "resizeMode": "stretch",
       "backgroundColor": "#ffffff"
     },
     "ios": {
       "supportsTablet": true,
+      "splash": {
+        "image": "./assets/AMPR_logo_gradient_B(1).png",
+        "resizeMode": "stretch",
+        "backgroundColor": "#ffffff"
+      },
       "infoPlist": {
         "UIBackgroundModes": [
           "location",
@@ -44,11 +49,6 @@
       "foregroundServiceType": ["location"],
       "adaptiveIcon": {
         "foregroundImage": "./assets/AMPR_logo_gradient_B(1).png",
-        "backgroundColor": "#ffffff"
-      },
-      "splash": {
-        "image": "./assets/AMTKITCHEN.png",
-        "resizeMode": "cover",
         "backgroundColor": "#ffffff"
       }
     },
