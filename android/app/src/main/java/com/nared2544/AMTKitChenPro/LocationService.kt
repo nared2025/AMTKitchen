@@ -46,12 +46,27 @@ class LocationService : Service() {
       this
     }
     prefs = storageContext.getSharedPreferences("amt_prefs", Context.MODE_PRIVATE)
-    deviceId = prefs.getString("device_id", null) ?: UUID.randomUUID().toString().also {
-      prefs.edit().putString("device_id", it).apply()
+    // ใช้ device_id ที่สร้างจาก React Native (AsyncStorage)
+    deviceId = prefs.getString("unique_device_id", null) ?: run {
+      // ถ้าไม่มี unique_device_id ให้สร้างจากข้อมูลอุปกรณ์
+      val buildId = Build.ID ?: "unknown"
+      val brand = Build.BRAND ?: "unknown"
+      val model = Build.MODEL ?: "unknown"
+      val deviceName = Build.DEVICE ?: "unknown"
+      val osVersion = Build.VERSION.RELEASE ?: "unknown"
+      val platform = "android"
+      val timestamp = System.currentTimeMillis()
+      val random1 = (1000000000..9999999999).random().toString()
+      val random2 = (1000000000..9999999999).random().toString()
+      val random3 = (1000000000..9999999999).random().toString()
+      
+      val uniqueId = "${brand}_${model}_${buildId}_${deviceName}_${osVersion}_${platform}_${timestamp}_${random1}_${random2}_${random3}"
+      prefs.edit().putString("unique_device_id", uniqueId).apply()
+      uniqueId
     }
     fusedClient = LocationServices.getFusedLocationProviderClient(this)
-    locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 15_000)
-      .setMinUpdateDistanceMeters(50f)
+    locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 1_800_000) // 30 นาที
+      .setMinUpdateDistanceMeters(1000f) // 1 กิโลเมตร
       .build()
     startInForeground()
     startUpdates()

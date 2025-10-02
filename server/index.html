@@ -786,6 +786,10 @@
     let markers = {}; // เก็บ marker ของแต่ละพนักงาน (key = device_id)
     let employees = []; // เก็บข้อมูลพนักงานทั้งหมด
     let currentFilter = 'all'; // ตัวกรองปัจจุบัน (all, online, today, nearby)
+    let userMarker = null; // marker ของผู้ใช้เอง
+    let hasCenteredOnUser = false; // ป้องกันการเลื่อนแผนที่ซ้ำ
+    const autoRefreshIntervalMs = 5000; // ความถี่ดึงข้อมูลอัตโนมัติ (ms)
+    const enableRealtime = false; // ปิดโหมดเรียลไทม์ (SSE)
 
     // แปลง timestamp เป็นข้อความเวลาแบบไทย (เช่น "5 นาทีที่แล้ว")
     function formatTime(timestamp) {
@@ -922,47 +926,79 @@
         .then(res => res.json())
         .then(data => {
           console.log('ข้อมูลที่ได้รับจาก API:', data); 
-          employees = data; // เก็บข้อมูลพนักงาน
-          // ลบ marker เดิมทั้งหมด
-          Object.values(markers).forEach(marker => {
-            map.Overlays.remove(marker);
-          });
-          markers = {}; // รีเซ็ต markers
-
-          // สร้าง marker ใหม่สำหรับแต่ละพนักงาน
-          data.forEach(employee => {
-              employee.nameEmp = employee.employee_name || 'พนักงาน'; // ดึงชื่อพนักงานจากฐานข้อมูล
-            const lat = parseFloat(employee.latitude);
-            const lon = parseFloat(employee.longitude);
-            const deviceId = employee.device_id;
-            const name = generateEmployeeName(deviceId);
-            const status = getEmployeeStatus(employee.timestamp);
-            const markerColor = status === 'online' ? '#2ecc71' : '#95a5a6'; // สี marker ตามสถานะ
-
-            // สร้าง marker ด้วย SVG icon
-            const marker = new longdo.Marker(
-              { lat, lon },
-              {
-                title: employee.nameEmp,
-                detail: `ID: ${deviceId}<br>สถานะ: ${status === 'online' ? 'ออนไลน์' : 'ออฟไลน์'}<br>อัปเดต: ${formatTime(employee.timestamp)}`,
-                icon: {
-                  url: 'https://map.longdo.com/mmmap/images/pin_mark.png',
-                  offset: { x: 15, y: 15 }
-                }
-              }
-            );
-            map.Overlays.add(marker); // เพิ่ม marker ลงแผนที่
-            markers[deviceId] = marker; // เก็บ marker
-          });
-
-          updateStats(); // อัปเดตสถิติ
-          renderEmployees(); // แสดงรายชื่อ
-          document.getElementById('last-update').textContent = new Date().toLocaleTimeString('th-TH');
+          applyLocationsToMap(data);
         })
         .catch(error => {
           console.error('Error:', error);
           document.getElementById('connection-status').textContent = 'เชื่อมต่อไม่ได้';
         });
+    }
+
+    // อัปเดต/เพิ่ม/ลบ markers ตามข้อมูลล่าสุดแบบ in-place
+    function applyLocationsToMap(data) {
+      employees = data;
+      const seen = new Set();
+      data.forEach(employee => {
+        employee.nameEmp = employee.employee_name || 'พนักงาน';
+        const lat = parseFloat(employee.latitude);
+        const lon = parseFloat(employee.longitude);
+        const deviceId = String(employee.device_id);
+        const status = getEmployeeStatus(employee.timestamp);
+        const detailHtml = `ID: ${deviceId}<br>สถานะ: ${status === 'online' ? 'ออนไลน์' : 'ออฟไลน์'}<br>อัปเดต: ${formatTime(employee.timestamp)}`;
+        seen.add(deviceId);
+        if (markers[deviceId]) {
+          try { markers[deviceId].location({ lat, lon }); } catch (e) {}
+          try { markers[deviceId].title(employee.nameEmp); } catch (e) {}
+          try { markers[deviceId].detail(detailHtml); } catch (e) {}
+        } else {
+          const marker = new longdo.Marker(
+            { lat, lon },
+            {
+              title: employee.nameEmp,
+              detail: detailHtml,
+              icon: {
+                url: 'https://map.longdo.com/mmmap/images/pin_mark.png',
+                offset: { x: 15, y: 15 }
+              }
+            }
+          );
+          map.Overlays.add(marker);
+          markers[deviceId] = marker;
+        }
+      });
+      // ลบ marker ที่ไม่มีในชุดข้อมูลใหม่
+      Object.keys(markers).forEach(id => {
+        if (!seen.has(id)) {
+          try { map.Overlays.remove(markers[id]); } catch (e) {}
+          delete markers[id];
+        }
+      });
+      updateStats();
+      renderEmployees();
+      document.getElementById('last-update').textContent = new Date().toLocaleTimeString('th-TH');
+    }
+
+    // เชื่อมต่อ SSE เพื่อรับข้อมูลเรียลไทม์
+    function initRealtimeStream() {
+      try {
+        const source = new EventSource('locations_sse.php');
+        source.addEventListener('open', () => {
+          document.getElementById('connection-status').textContent = 'เชื่อมต่อเรียลไทม์';
+        });
+        source.addEventListener('error', () => {
+          document.getElementById('connection-status').textContent = 'เชื่อมต่อหลุด กำลังรอ...';
+        });
+        source.addEventListener('locations', (evt) => {
+          try {
+            const payload = JSON.parse(evt.data);
+            applyLocationsToMap(payload);
+          } catch (e) {
+            console.error('SSE parse error', e);
+          }
+        });
+      } catch (e) {
+        console.error('SSE init error', e);
+      }
     }
 
     // เริ่มต้นแผนที่และโหลดข้อมูลเมื่อหน้าเว็บโหลดเสร็จ
@@ -972,24 +1008,32 @@
         zoom: 10 // ระดับซูมเริ่มต้น
       });
 
-      // ===== เพิ่มส่วนนี้เพื่อดึงตำแหน่ง user จริง =====
+      // ติดตามตำแหน่งผู้ใช้แบบต่อเนื่อง
       if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(function(position) {
+        navigator.geolocation.watchPosition(function(position) {
           var userLat = position.coords.latitude;
           var userLon = position.coords.longitude;
-          var userMarker = new longdo.Marker(
-            { lon: userLon, lat: userLat },
-            {
-              title: "ตำแหน่งของคุณ",
-              icon: {
-                url: "https://map.longdo.com/mmmap/images/pin_mark.png", // หรือใช้ SVG เอง
-                offset: { x: 12, y: 41 }
+          if (!userMarker) {
+            userMarker = new longdo.Marker(
+              { lon: userLon, lat: userLat },
+              {
+                title: "ตำแหน่งของคุณ",
+                icon: {
+                  url: "https://map.longdo.com/mmmap/images/pin_mark.png",
+                  offset: { x: 12, y: 41 }
+                }
               }
-            }
-          );
-          map.Overlays.add(userMarker);
-          map.location({ lon: userLon, lat: userLat }, true); // เลื่อนแผนที่ไปที่ user
-        });
+            );
+            map.Overlays.add(userMarker);
+          } else {
+            // อัปเดตตำแหน่งปัจจุบันของผู้ใช้
+            try { userMarker.location({ lon: userLon, lat: userLat }); } catch (e) {}
+          }
+          if (!hasCenteredOnUser) {
+            map.location({ lon: userLon, lat: userLat }, true);
+            hasCenteredOnUser = true;
+          }
+        }, function() {}, { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 });
       }
 
       // ใส่ event ให้ปุ่ม filter ทุกปุ่ม
@@ -1000,6 +1044,7 @@
       });
 
       loadEmployees(); // โหลดข้อมูลครั้งแรก
+      if (enableRealtime) { initRealtimeStream(); }
       setInterval(loadEmployees, 1800000); // โหลดข้อมูลใหม่ทุก 30 นาที
     };
   </script>

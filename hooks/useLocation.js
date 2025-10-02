@@ -3,10 +3,85 @@ import React, { useEffect, useState} from 'react'
 import * as Location from "expo-location"
 import * as TaskManager from 'expo-task-manager';
 import * as Device from 'expo-device';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import LocationService from '../LocationModule';
 
 // ชื่อ task สำหรับ background location
 const BACKGROUND_LOCATION_TASK = 'background-location-task';
+
+// ฟังก์ชันลบ device ID เก่า (สำหรับทดสอบ)
+const clearDeviceId = async () => {
+    try {
+        await AsyncStorage.removeItem('unique_device_id');
+        console.log('Device ID cleared');
+    } catch (error) {
+        console.error('Error clearing device ID:', error);
+    }
+};
+
+// ฟังก์ชันแสดง device ID ปัจจุบัน
+const showCurrentDeviceId = async () => {
+    try {
+        const deviceId = await AsyncStorage.getItem('unique_device_id');
+        console.log('Current Device ID:', deviceId);
+        return deviceId;
+    } catch (error) {
+        console.error('Error getting current device ID:', error);
+        return null;
+    }
+};
+
+// ฟังก์ชันสร้าง unique device ID (global scope)
+const getUniqueDeviceId = async () => {
+    try {
+        // ใช้ AsyncStorage เพื่อเก็บ device ID ที่สร้างแล้ว
+        let deviceId = await AsyncStorage.getItem('unique_device_id');
+        
+        if (!deviceId) {
+            // สร้าง unique ID ใหม่ที่รวมข้อมูลหลายอย่าง
+            const timestamp = Date.now();
+            const random1 = Math.random().toString(36).substring(2, 15);
+            const random2 = Math.random().toString(36).substring(2, 15);
+            const random3 = Math.random().toString(36).substring(2, 15);
+            
+            // สร้าง UUID-like string
+            const uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                const r = Math.random() * 16 | 0;
+                const v = c == 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+            
+            // รวมข้อมูลหลายอย่างเพื่อให้ unique มากขึ้น
+            const deviceInfo = [
+                Device.brand || 'unknown',
+                Device.model || 'unknown', 
+                Device.osInternalBuildId || 'unknown',
+                Device.deviceName || 'unknown',
+                Device.osVersion || 'unknown',
+                Device.platform || 'unknown',
+                timestamp.toString(),
+                uuid,
+                random1,
+                random2,
+                random3
+            ].join('_');
+            
+            deviceId = deviceInfo;
+            
+            // บันทึก device ID ลง AsyncStorage
+            await AsyncStorage.setItem('unique_device_id', deviceId);
+            console.log('🆔 Created new unique device ID:', deviceId);
+        } else {
+            console.log('🆔 Using existing device ID:', deviceId);
+        }
+        
+        return deviceId;
+    } catch (error) {
+        console.error('Error creating unique device ID:', error);
+        // fallback ใช้วิธีเดิม
+        return Device.osInternalBuildId || Device.deviceName || 'unknown_device';
+    }
+};
 
 // กำหนด task สำหรับ background location tracking - ใช้วิธีการเดียวกับโค้ดต้นฉบับ
 TaskManager.defineTask(BACKGROUND_LOCATION_TASK, ({ data, error }) => {
@@ -31,10 +106,10 @@ TaskManager.defineTask(BACKGROUND_LOCATION_TASK, ({ data, error }) => {
 });
 
 // ฟังก์ชันส่งข้อมูลตำแหน่งไปยัง server
-const sendLocationToServer = async (coords) => {
+const sendLocationToServer = async (coords, attempt = 1) => {
     try {
-        // ดึงข้อมูลอุปกรณ์ (เฉพาะ device_id) - ใช้วิธีเดียวกับโค้ดต้นฉบับ
-        const deviceId = Device.osInternalBuildId || Device.deviceName || 'unknown_device';
+        // ดึงข้อมูลอุปกรณ์ (เฉพาะ device_id) - ใช้ unique device ID
+        const deviceId = await getUniqueDeviceId();
 
         // สร้างเวลาประเทศไทย (UTC+7)
         const thaiTime = new Date();
@@ -68,17 +143,12 @@ const sendLocationToServer = async (coords) => {
         if (!response.ok) {
             console.error('❌ Failed to send location. Status:', response.status);
             console.error('❌ Response text:', result);
-            // เพิ่มการบันทึก error ลง local storage
-            try {
-                const errorLog = {
-                    timestamp: new Date().toISOString(),
-                    status: response.status,
-                    error: result,
-                    location: { latitude: coords.latitude, longitude: coords.longitude }
-                };
-                console.log('❌ Error logged:', errorLog);
-            } catch (e) {
-                console.error('❌ Failed to log error:', e);
+            // retry แบบง่าย: ลองใหม่สูงสุด 3 ครั้ง
+            if (attempt < 3) {
+                const nextAttempt = attempt + 1;
+                const backoffMs = 3000 * attempt;
+                console.log(`⏳ Retry sending in ${backoffMs} ms (attempt ${nextAttempt}/3)`);
+                setTimeout(() => sendLocationToServer(coords, nextAttempt), backoffMs);
             }
         } else {
             console.log('✅ Location sent successfully');
@@ -86,6 +156,12 @@ const sendLocationToServer = async (coords) => {
     } catch (error) {
         console.error('❌ Fetch error:', error);
         console.error('❌ Error details:', error.message);
+        if (attempt < 3) {
+            const nextAttempt = attempt + 1;
+            const backoffMs = 3000 * attempt;
+            console.log(`⏳ Retry sending in ${backoffMs} ms (attempt ${nextAttempt}/3)`);
+            setTimeout(() => sendLocationToServer(coords, nextAttempt), backoffMs);
+        }
     }
 };
 
@@ -101,8 +177,8 @@ const useLocation = () => {
     // ฟังก์ชันดึงข้อมูลอุปกรณ์
     const getDeviceInfo = async () => {
         try {
-            // ใช้วิธีเดียวกับโค้ดต้นฉบับ
-            const deviceId = Device.osInternalBuildId || Device.deviceName || 'unknown_device';
+            // สร้าง unique device ID ที่รวมข้อมูลหลายอย่าง
+            const deviceId = await getUniqueDeviceId();
             setDeviceInfo({ device_id: deviceId });
             console.log('Device ID:', deviceId);
             return deviceId;
@@ -112,9 +188,13 @@ const useLocation = () => {
         }
     };
 
+
     // ฟังก์ชันสำหรับขอ permission และดึงตำแหน่งผู้ใช้
     const getUserLocation = async () => {
         try {
+            // Sync device_id ก่อนดึงตำแหน่ง
+            await syncDeviceIdToNative();
+            
             console.log('📍 Requesting location permissions...');
             
             // ขอ permission การเข้าถึง location foreground
@@ -136,7 +216,13 @@ const useLocation = () => {
                 console.warn('⚠️ Background location permission not granted, but continuing...');
             }
 
-            // ดึงตำแหน่งปัจจุบัน
+            // ส่ง last known position ทันทีถ้ามี (บูตใหม่/ยังจับสัญญาณไม่พร้อม)
+            const lastKnown = await Location.getLastKnownPositionAsync();
+            if (lastKnown?.coords) {
+                try { await sendLocationToServer(lastKnown.coords); } catch {}
+            }
+
+            // ดึงตำแหน่งปัจจุบัน (active fix)
             let {coords} = await Location.getCurrentPositionAsync();
 
             // ถ้ามีข้อมูล coords
@@ -163,9 +249,28 @@ const useLocation = () => {
         }
     };
 
+    // ฟังก์ชัน sync device_id ไปยัง Android Native
+    const syncDeviceIdToNative = async () => {
+        try {
+            if (Platform.OS === 'android') {
+                const deviceId = await getUniqueDeviceId();
+                console.log('🔄 Syncing device ID to Native:', deviceId);
+                
+                // ใช้ AsyncStorage เพื่อให้ Native อ่านได้
+                await AsyncStorage.setItem('unique_device_id', deviceId);
+                console.log('✅ Device ID synced to Native');
+            }
+        } catch (error) {
+            console.error('❌ Error syncing device ID to Native:', error);
+        }
+    };
+
     // ฟังก์ชันเริ่ม background location tracking (ใช้ Native Service)
     const startBackgroundLocation = async () => {
         try {
+            // Sync device_id ก่อนเริ่ม background tracking
+            await syncDeviceIdToNative();
+            
             if (Platform.OS === 'android') {
                 // Android: พยายามใช้ Native ก่อน ถ้าไม่มีให้ fallback เป็น Expo
                 console.log('🚀 Starting background location (Android)...');
@@ -195,8 +300,8 @@ const useLocation = () => {
                 if (!isRegistered) {
                     await Location.startLocationUpdatesAsync(BACKGROUND_LOCATION_TASK, {
                         accuracy: Location.Accuracy.BestForNavigation,
-                        timeInterval: 30000,
-                        distanceInterval: 1000,
+                        timeInterval: 1800000, // 30 นาที (30 * 60 * 1000 ms)
+                        distanceInterval: 1000, // 1 กิโลเมตร (1000 เมตร)
                         showsBackgroundLocationIndicator: true,
                         foregroundService: {
                             notificationTitle: 'AMT Kitchen Location',
@@ -231,8 +336,8 @@ const useLocation = () => {
 
                 await Location.startLocationUpdatesAsync(BACKGROUND_LOCATION_TASK, {
                     accuracy: Location.Accuracy.BestForNavigation,
-                    timeInterval: 30000,
-                    distanceInterval: 1000,
+                    timeInterval: 1800000, // 30 นาที (30 * 60 * 1000 ms)
+                    distanceInterval: 1000, // 1 กิโลเมตร (1000 เมตร)
                     showsBackgroundLocationIndicator: true,
                     foregroundService: {
                         notificationTitle: 'AMT Kitchen Location',
@@ -368,7 +473,10 @@ const useLocation = () => {
         startBackgroundLocation,
         stopBackgroundLocation,
         getUserLocation,
-        checkBackgroundLocationStatus
+        checkBackgroundLocationStatus,
+        clearDeviceId,
+        showCurrentDeviceId,
+        syncDeviceIdToNative
     };
 };
 
