@@ -611,20 +611,37 @@ function updateStats() {
     // ===========================
     // นำข้อมูลพนักงานมาแสดงบนแผนที่และอัพเดต marker
     // ===========================
+    // ฟังก์ชันกรองให้เหลือเฉพาะตำแหน่งล่าสุดของแต่ละ device_id
+function getLatestLocations(locations) {
+  const latest = {};
+  locations.forEach(emp => {
+    if (
+      !latest[emp.device_id] ||
+      new Date(emp.timestamp) > new Date(latest[emp.device_id].timestamp)
+    ) {
+      latest[emp.device_id] = emp;
+    }
+  });
+  return Object.values(latest);
+}
+
     function applyLocationsToMap(data) {
-  // data คือ { total_devices: "3", locations: [ ... ] }
-  employees = data.locations;            // เก็บ array ของพนักงาน
-  totalDevices = data.total_devices; // เก็บจำนวนรวม
+  let locs = data.locations;
+  // ถ้าเลือก "ข้อมูลปัจจุบัน" ให้กรองเหลือแค่ตำแหน่งล่าสุดของแต่ละ device_id
+  if (selectedHistoryDays === 0) {
+    locs = getLatestLocations(locs);
+  }
+  employees = locs;
+  totalDevices = data.total_devices;
 
   const seen = new Set();
-  employees.forEach(employee => {        // <-- ใช้ employees (array) แทน data
+  employees.forEach(employee => {
     employee.nameEmp = employee.employee_name || 'พนักงาน';
     const lat = parseFloat(employee.latitude);
     const lon = parseFloat(employee.longitude);
     const deviceId = String(employee.device_id);
     const status = getEmployeeStatus(employee.timestamp);
 
-    // แนบ total_devices ไว้กับแต่ละ employee ถ้าจะใช้ใน card
     employee.total_devices = totalDevices;
 
     const detailHtml = `
@@ -634,45 +651,50 @@ function updateStats() {
     `;
     seen.add(deviceId);
 
-  // เรียกแค่ครั้งเดียวหลัง loop เสร็จ
-  updateStats(); 
-  renderEmployees();
-
-        // ถ้ามี marker อยู่แล้ว ให้ update ตำแหน่งและข้อมูล
-        if (markers[deviceId]) {
-          try { markers[deviceId].location({ lat, lon }); } catch (e) {}
-          try { markers[deviceId].title(employee.nameEmp); } catch (e) {}
-          try { markers[deviceId].detail(detailHtml); } catch (e) {}
-        } else {
-          // ถ้ายังไม่มี marker ให้สร้างใหม่
-          const marker = new longdo.Marker(
-            { lat, lon },
-            {
-              title: employee.nameEmp,
-              detail: detailHtml,
-              icon: {
-                url: 'https://map.longdo.com/mmmap/images/pin_mark.png',
-                offset: { x: 15, y: 15 }
-              }
-            }
-          );
-          map.Overlays.add(marker);
-          markers[deviceId] = marker;
+    // ถ้ามี marker อยู่แล้ว ให้ update ตำแหน่งและข้อมูล
+    if (markers[deviceId]) {
+      try { markers[deviceId].location({ lat, lon }); } catch (e) {}
+      try { markers[deviceId].title(employee.nameEmp); } catch (e) {}
+      try { markers[deviceId].detail(detailHtml); } catch (e) {}
+    } else {
+      // ถ้ายังไม่มี marker ให้สร้างใหม่
+      const marker = new longdo.Marker(
+        { lat, lon },
+        {
+          title: employee.nameEmp,
+          detail: detailHtml,
+          icon: {
+            url: 'https://map.longdo.com/mmmap/images/pin_mark.png',
+            offset: { x: 15, y: 15 }
+          }
         }
-      });
-
-      // ลบ marker ที่ไม่มีข้อมูลแล้วออกจากแผนที่
-      Object.keys(markers).forEach(id => {
-        if (!seen.has(id)) {
-          try { map.Overlays.remove(markers[id]); } catch (e) {}
-          delete markers[id];
-        }
-      });
-
-      updateStats(); // อัพเดตจำนวนพนักงาน
-      renderEmployees(); // แสดงรายชื่อพนักงาน
-      document.getElementById('last-update').textContent = new Date().toLocaleTimeString('th-TH');
+      );
+      map.Overlays.add(marker);
+      markers[deviceId] = marker;
     }
+  });
+
+  function filterByExactDay(locations, daysAgo) {
+    const today = new Date();
+    const targetDate = new Date();
+    targetDate.setDate(today.getDate() - daysAgo);
+
+    const targetDateStr = targetDate.toISOString().split('T')[0];
+    return locations.filter(loc => loc.timestamp.startsWith(targetDateStr));
+  }
+
+  // ลบ marker ที่ไม่มีข้อมูลแล้วออกจากแผนที่
+  Object.keys(markers).forEach(id => {
+    if (!seen.has(id)) {
+      try { map.Overlays.remove(markers[id]); } catch (e) {}
+      delete markers[id];
+    }
+  });
+
+  updateStats();
+  renderEmployees();
+  document.getElementById('last-update').textContent = new Date().toLocaleTimeString('th-TH');
+}
 
     // ===========================
     // ฟังก์ชันเริ่มต้นเมื่อโหลดหน้าเว็บ
@@ -740,6 +762,7 @@ function updateStats() {
       // ตั้งเวลารีเฟรชข้อมูลทุก 30 นาที (1800000 ms)
       setInterval(loadEmployees, 1800000);
     };
+    
   </script>
 </body>
 </html>

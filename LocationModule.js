@@ -50,6 +50,22 @@ class LocationService {
     
     return await LocationModule.isLocationTrackingActive();
   }
+
+  /**
+   * ขอสิทธิ์ยกเว้น Battery Optimization
+   * @returns {Promise<string>} ผลลัพธ์การขอสิทธิ์
+   */
+  static async requestBatteryOptimizationExemption() {
+    if (Platform.OS !== 'android') {
+      throw new Error('Battery optimization exemption is only supported on Android');
+    }
+    
+    if (!LocationModule) {
+      throw new Error('LocationModule is not available');
+    }
+    
+    return await LocationModule.requestBatteryOptimizationExemption();
+  }
 }
 
 export default LocationService;

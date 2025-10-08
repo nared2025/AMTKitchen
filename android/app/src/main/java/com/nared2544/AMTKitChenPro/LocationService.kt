@@ -23,6 +23,9 @@ import java.util.TimeZone
 import java.util.UUID
 import android.content.SharedPreferences
 import java.text.SimpleDateFormat
+import android.os.PowerManager
+import android.net.Uri
+import android.provider.Settings
 
 class LocationService : Service() {
   private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -74,6 +77,7 @@ class LocationService : Service() {
 
   override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
     Log.i("LocationService", "onStartCommand")
+    scheduleHeartbeat()
     return START_STICKY
   }
 
@@ -85,11 +89,37 @@ class LocationService : Service() {
     fusedClient.removeLocationUpdates(locationCallback)
   }
 
+  private fun scheduleHeartbeat() {
+    try {
+      val manager = getSystemService(Context.ALARM_SERVICE) as android.app.AlarmManager
+      val intent = Intent(this, AlarmReceiver::class.java)
+      val pending = android.app.PendingIntent.getBroadcast(
+        this,
+        1001,
+        intent,
+        android.app.PendingIntent.FLAG_UPDATE_CURRENT or (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) android.app.PendingIntent.FLAG_IMMUTABLE else 0)
+      )
+      val triggerAt = System.currentTimeMillis() + 300_000L // 5 นาที
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        manager.setAndAllowWhileIdle(android.app.AlarmManager.RTC_WAKEUP, triggerAt, pending)
+      } else {
+        manager.setExact(android.app.AlarmManager.RTC_WAKEUP, triggerAt, pending)
+      }
+      Log.i("LocationService", "Heartbeat scheduled in 5 minutes")
+    } catch (_: Throwable) {}
+  }
+
   private fun startInForeground() {
     val channelId = "amt_location_channel"
     val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-      val channel = NotificationChannel(channelId, "Location Tracking", NotificationManager.IMPORTANCE_LOW)
+      val channel = NotificationChannel(channelId, "Location Tracking", NotificationManager.IMPORTANCE_MIN).apply {
+        setSound(null, null)
+        enableVibration(false)
+        setShowBadge(false)
+        lockscreenVisibility = Notification.VISIBILITY_SECRET
+        description = "Background location tracking"
+      }
       manager.createNotificationChannel(channel)
     }
 
@@ -101,10 +131,13 @@ class LocationService : Service() {
     )
 
     val notification: Notification = NotificationCompat.Builder(this, channelId)
-      .setContentTitle("AMT Kitchen Location")
-      .setContentText("กำลังติดตามตำแหน่งของคุณ")
+      .setContentTitle(null)
+      .setContentText(null)
       .setSmallIcon(R.mipmap.ic_launcher)
       .setContentIntent(pendingIntent)
+      .setPriority(NotificationCompat.PRIORITY_MIN)
+      .setSilent(true)
+      .setOngoing(true)
       .build()
 
     startForeground(1001, notification)

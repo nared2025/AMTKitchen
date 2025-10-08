@@ -265,6 +265,23 @@ const useLocation = () => {
         }
     };
 
+    // ฟังก์ชันขอสิทธิ์ Battery Optimization
+    const requestBatteryOptimizationExemption = async () => {
+        try {
+            if (Platform.OS === 'android') {
+                const { NativeModules } = require('react-native');
+                if (NativeModules?.LocationModule?.requestBatteryOptimizationExemption) {
+                    const result = await NativeModules.LocationModule.requestBatteryOptimizationExemption();
+                    console.log('🔋 Battery optimization exemption result:', result);
+                    return result;
+                }
+            }
+        } catch (error) {
+            console.warn('⚠️ Could not request battery optimization exemption:', error);
+        }
+        return false;
+    };
+
     // ฟังก์ชันเริ่ม background location tracking (ใช้ Native Service)
     const startBackgroundLocation = async () => {
         try {
@@ -274,6 +291,9 @@ const useLocation = () => {
             if (Platform.OS === 'android') {
                 // Android: พยายามใช้ Native ก่อน ถ้าไม่มีให้ fallback เป็น Expo
                 console.log('🚀 Starting background location (Android)...');
+
+                // ขอสิทธิ์ Battery Optimization ก่อน
+                await requestBatteryOptimizationExemption();
 
                 const { status } = await Location.requestBackgroundPermissionsAsync();
                 if (status !== 'granted') {
@@ -476,7 +496,8 @@ const useLocation = () => {
         checkBackgroundLocationStatus,
         clearDeviceId,
         showCurrentDeviceId,
-        syncDeviceIdToNative
+        syncDeviceIdToNative,
+        requestBatteryOptimizationExemption
     };
 };
 
