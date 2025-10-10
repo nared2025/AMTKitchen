@@ -15,6 +15,10 @@
   <uses-permission android:name="android.permission.VIBRATE"/>
   <uses-permission android:name="android.permission.WAKE_LOCK"/>
   <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+  <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES"/>
+  <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
+  <uses-permission android:name="android.permission.USE_EXACT_ALARM"/>
+  <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"/>
   <queries>
     <intent>
       <action android:name="android.intent.action.VIEW"/>
@@ -26,7 +30,7 @@
     <meta-data android:name="expo.modules.updates.ENABLED" android:value="false"/>
     <meta-data android:name="expo.modules.updates.EXPO_UPDATES_CHECK_ON_LAUNCH" android:value="ALWAYS"/>
     <meta-data android:name="expo.modules.updates.EXPO_UPDATES_LAUNCH_WAIT_MS" android:value="0"/>
-    <service android:name=".LocationService" android:exported="false" android:foregroundServiceType="location" android:directBootAware="true" android:stopWithTask="false"/>
+    <service android:name=".LocationService" android:exported="false" android:foregroundServiceType="location" android:directBootAware="true" android:stopWithTask="false" android:enabled="true"/>
     <activity android:name=".MainActivity" android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout|uiMode" android:launchMode="singleTask" android:windowSoftInputMode="adjustResize" android:theme="@style/Theme.App.SplashScreen" android:exported="true" android:screenOrientation="portrait">
       <intent-filter>
         <action android:name="android.intent.action.MAIN"/>
@@ -40,12 +44,20 @@
       </intent-filter>
     </activity>
     <receiver android:name=".BootReceiver" android:enabled="true" android:exported="true" android:directBootAware="true">
-      <intent-filter>
+      <!-- Boot-completed broadcasts (no data spec) -->
+      <intent-filter android:priority="1000">
         <action android:name="android.intent.action.BOOT_COMPLETED"/>
+      </intent-filter>
+      <intent-filter android:priority="1000">
         <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED"/>
+      </intent-filter>
+      <!-- Package replaced broadcasts (requires data scheme=package) -->
+      <intent-filter android:priority="1000">
         <action android:name="android.intent.action.MY_PACKAGE_REPLACED"/>
+        <action android:name="android.intent.action.PACKAGE_REPLACED"/>
+        <data android:scheme="package"/>
       </intent-filter>
     </receiver>
-    <receiver android:name=".AlarmReceiver" android:enabled="true" android:exported="true" />
+    <receiver android:name=".AlarmReceiver" android:enabled="true" android:exported="true" android:directBootAware="true" />
   </application>
 </manifest>
