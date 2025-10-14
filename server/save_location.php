@@ -9,13 +9,8 @@ $body = file_get_contents('php://input');
 // แปลงข้อมูล JSON เป็น array
 $data = json_decode($body, true);
 
-// บันทึก log ข้อมูลที่รับเข้ามา (raw และ json) ลงไฟล์ log.txt
-file_put_contents("log.txt", "RAW: " . $body . PHP_EOL, FILE_APPEND);
-file_put_contents("log.txt", "JSON: " . json_encode($data) . PHP_EOL, FILE_APPEND);
-
 // ถ้าไม่ได้รับข้อมูลหรือ decode ไม่สำเร็จ ให้ตอบกลับ error
 if (!$data) {
-    file_put_contents("log.txt", "⚠️ BODY ว่างเปล่า ไม่รับข้อมูล" . PHP_EOL, FILE_APPEND);
     echo json_encode(["error" => "EMPTY BODY"]);
     exit;
 }
@@ -56,14 +51,20 @@ $conn = new mysqli("localhost", "amt","P@ssw0rd!amt","gps_db");
 
 // ตรวจสอบการเชื่อมต่อ ถ้าเชื่อมต่อไม่ได้ให้หยุดและแสดงข้อความผิดพลาด
 if ($conn->connect_error) {
-    $error_msg = "เชื่อมต่อไม่สำเร็จ: " . $conn->connect_error;
-    file_put_contents("log.txt", "❌ " . $error_msg . PHP_EOL, FILE_APPEND);
-    echo json_encode(["error" => $error_msg]);
-    exit;
+    die("เชื่อมต่อไม่สำเร็จ: " . $conn->connect_error);
 }
 
+
+// เพิ่ม device_id ลงตาราง devices ถ้ายังไม่มี
+$checkSql = "INSERT INTO devices (device_id) VALUES (?) 
+             ON DUPLICATE KEY UPDATE device_id = VALUES(device_id)";
+$checkStmt = $conn->prepare($checkSql);
+$checkStmt->bind_param("s", $device_id);
+$checkStmt->execute();
+$checkStmt->close();
+
 // เตรียมคำสั่ง SQL สำหรับเพิ่มหรืออัปเดตข้อมูล (ถ้ามี device_id ซ้ำจะอัปเดตค่าใหม่)
-$sql = "INSERT INTO location_logs (device_id, latitude, longitude, timestamp)
+$sql = "INSERT INTO location_log (device_id, latitude, longitude, timestamp)
         VALUES (?, ?, ?, ?)
         ON DUPLICATE KEY UPDATE
             latitude = VALUES(latitude),
@@ -78,12 +79,9 @@ $stmt->bind_param("sdds", $device_id, $lat, $lng, $time);
 
 // รันคำสั่ง SQL เพื่อบันทึกหรืออัปเดตข้อมูล
 if (!$stmt->execute()) {
-    $error_msg = "SQL ERROR: " . $stmt->error;
-    file_put_contents("log.txt", $error_msg . PHP_EOL, FILE_APPEND);
-    echo json_encode(["error" => $error_msg]);
+    echo " SQL ERROR:" . $stmt->error;
 } else {
     // ตอบกลับไปยัง client ว่าสำเร็จ
-    file_put_contents("log.txt", "✅ Data saved successfully for device: " . $device_id . PHP_EOL, FILE_APPEND);
     echo json_encode(["success" => true]);
 }
 
